@@ -1,11 +1,14 @@
 import random
 import pygame
+import time
 
 class ImprovedSnakeEnv:
-    def __init__(self, grid_size=10, block_size=40, render_mode="none"):
+    def __init__(self, grid_size=15, block_size=40, render_mode="none"):
         self.grid_size = grid_size
         self.block_size = block_size
         self.render_mode = render_mode
+        self.score = 0
+        self.start_time = time.time()
         self.reset()
 
         if self.render_mode == "human":
@@ -13,12 +16,15 @@ class ImprovedSnakeEnv:
             self.window_size = self.grid_size * self.block_size
             self.screen = pygame.display.set_mode((self.window_size, self.window_size))
             self.clock = pygame.time.Clock()
+            self.font = pygame.font.Font(None, 36)
 
     def reset(self):
         self.snake = [(random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))]
         self.food = (random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))
         self.direction = random.choice(['UP', 'DOWN', 'LEFT', 'RIGHT'])
         self.done = False
+        self.score = 0
+        self.start_time = time.time()
         return self.get_state()
 
     def get_state(self):
@@ -55,6 +61,7 @@ class ImprovedSnakeEnv:
 
         if new_head == self.food:
             reward = 10
+            self.score += 10
             self.food = (random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))
         else:
             self.snake.pop()
@@ -76,6 +83,17 @@ class ImprovedSnakeEnv:
 
         pygame.draw.rect(self.screen, (255, 0, 0), 
                          (self.food[0] * self.block_size, self.food[1] * self.block_size, self.block_size, self.block_size))
+
+        # Display time in top left
+        elapsed_time = int(time.time() - self.start_time)
+        time_text = self.font.render(f"Time: {elapsed_time}s", True, (255, 255, 255))
+        self.screen.blit(time_text, (10, 10))
+
+        # Display score in top right
+        score_text = self.font.render(f"Score: {self.score}", True, (255, 255, 255))
+        score_rect = score_text.get_rect()
+        score_rect.topright = (self.window_size - 10, 10)
+        self.screen.blit(score_text, score_rect)
 
         pygame.display.flip()
         self.clock.tick(10)
