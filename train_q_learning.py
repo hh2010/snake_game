@@ -1,33 +1,45 @@
-import random
 import pickle
-from snake_env import ImprovedSnakeEnv
+import random
+from typing import Any, Callable, Dict, List
+
 import matplotlib.pyplot as plt
 
+from snake_env import Action, ImprovedSnakeEnv, State
+
+
+def dict_get(d: Dict[str, float]) -> Callable[[str], float]:
+    return lambda k: d[k]
+
+
 # Define hyperparameters
-alpha = 0.1   # Learning rate
-gamma = 0.9   # Discount factor
-epsilon = 1.0 # Exploration rate (starts high, decays over time)
-epsilon_decay = 0.995
-epsilon_min = 0.01
-num_episodes = 5000
-actions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
+alpha: float = 0.1  # Learning rate
+gamma: float = 0.9  # Discount factor
+epsilon: float = 1.0  # Exploration rate (starts high, decays over time)
+epsilon_decay: float = 0.995
+epsilon_min: float = 0.01
+num_episodes: int = 5000
+actions: List[str] = ["UP", "DOWN", "LEFT", "RIGHT"]
 
 # Initialize Q-table as a dictionary
-Q_table = {}
+Q_table: Dict[State, Dict[str, float]] = {}
 
-def get_best_action(state):
+
+def get_best_action(state: State) -> Action:
     """Selects the action with the highest Q-value for a given state."""
     if state not in Q_table:
         Q_table[state] = {a: 0 for a in actions}  # Initialize unseen states with 0
-    
-    return max(Q_table[state], key=Q_table[state].get)  # Action with highest Q-value
 
-def train_q_learning():
+    return max(
+        Q_table[state], key=dict_get(Q_table[state])
+    )  # Action with highest Q-value
+
+
+def train_q_learning() -> List[float]:
     global epsilon
     env = ImprovedSnakeEnv(grid_size=10)
-    episode_rewards = []
+    episode_rewards: List[float] = []
 
-    for episode in range(num_episodes):
+    for _ in range(num_episodes):
         state = env.reset()
         total_reward = 0
 
@@ -46,7 +58,11 @@ def train_q_learning():
                 Q_table[next_state] = {a: 0 for a in actions}
 
             best_next_action = get_best_action(next_state)
-            Q_table[state][action] = Q_table[state][action] + alpha * (reward + gamma * Q_table[next_state][best_next_action] - Q_table[state][action])
+            Q_table[state][action] = Q_table[state][action] + alpha * (
+                reward
+                + gamma * Q_table[next_state][best_next_action]
+                - Q_table[state][action]
+            )
 
             state = next_state
 
@@ -61,14 +77,15 @@ def train_q_learning():
     with open("./models/q_table.pkl", "wb") as f:
         pickle.dump(Q_table, f)
 
-  
-  
+    return episode_rewards  # Add return statement here
+
+
 # Train and plot results
 episode_rewards = train_q_learning()
 
 plt.plot(episode_rewards)
-plt.xlabel('Episode')
-plt.ylabel('Total Reward')
-plt.title('Training Progress of Q-Learning Snake Agent')
+plt.xlabel("Episode")
+plt.ylabel("Total Reward")
+plt.title("Training Progress of Q-Learning Snake Agent")
 plt.savefig("./outputs/training_plot.png")
 plt.show()
