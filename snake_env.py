@@ -5,6 +5,8 @@ from typing import List, Optional, Tuple, cast
 # pylint: disable=no-member
 import pygame
 
+from utils import SnakeActions
+
 Point = Tuple[int, int]
 State = Tuple[int, int, int, int, int, int, int, int]
 Action = str
@@ -45,7 +47,7 @@ class ImprovedSnakeEnv:
             random.randint(0, self.grid_size - 1),
             random.randint(0, self.grid_size - 1),
         )
-        self.direction = random.choice(["UP", "DOWN", "LEFT", "RIGHT"])
+        self.direction = random.choice(SnakeActions.all())
         self.done = False
         self.score = 0
         self.start_time = time.time()
@@ -88,13 +90,13 @@ class ImprovedSnakeEnv:
         head_x, head_y = self.snake[0]
         new_head = None
 
-        if action == "UP":
+        if action == SnakeActions.UP:
             new_head = (head_x, head_y - 1)
-        elif action == "DOWN":
+        elif action == SnakeActions.DOWN:
             new_head = (head_x, head_y + 1)
-        elif action == "LEFT":
+        elif action == SnakeActions.LEFT:
             new_head = (head_x - 1, head_y)
-        elif action == "RIGHT":
+        elif action == SnakeActions.RIGHT:
             new_head = (head_x + 1, head_y)
 
         if new_head is None:

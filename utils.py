@@ -1,7 +1,20 @@
 import random
+from dataclasses import dataclass
 from typing import Callable, Dict, List
 
 from snake_env import Action, State
+
+
+@dataclass(frozen=True)
+class SnakeActions:
+    UP: str = "UP"
+    DOWN: str = "DOWN"
+    LEFT: str = "LEFT"
+    RIGHT: str = "RIGHT"
+
+    @classmethod
+    def all(cls) -> List[str]:
+        return [cls.UP, cls.DOWN, cls.LEFT, cls.RIGHT]
 
 
 def dict_get(d: Dict[str, float]) -> Callable[[str], float]:

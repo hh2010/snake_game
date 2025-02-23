@@ -1,14 +1,14 @@
 import pickle
-from typing import Dict, List
+from typing import Dict
 
 # pylint: disable=no-member
 import pygame
 
 from snake_env import ImprovedSnakeEnv, State
-from utils import get_best_action
+from utils import SnakeActions, get_best_action
 
 
-def play_snake_gui(grid_size: int, block_size: int, actions: List[str]) -> None:
+def play_snake_gui(grid_size: int, block_size: int) -> None:
     with open("models/q_table.pkl", "rb") as f:
         Q_table: Dict[State, Dict[str, float]] = pickle.load(f)
 
@@ -23,7 +23,7 @@ def play_snake_gui(grid_size: int, block_size: int, actions: List[str]) -> None:
             if event.type == pygame.QUIT:
                 running = False
 
-        action = get_best_action(state, Q_table, actions)
+        action = get_best_action(state, Q_table, SnakeActions.all())
         next_state, _, done = env.step(action)
         state = next_state
         env.render()
@@ -36,4 +36,4 @@ def play_snake_gui(grid_size: int, block_size: int, actions: List[str]) -> None:
 
 
 if __name__ == "__main__":
-    play_snake_gui(grid_size=15, block_size=40, actions=["UP", "DOWN", "LEFT", "RIGHT"])
+    play_snake_gui(grid_size=15, block_size=40)
