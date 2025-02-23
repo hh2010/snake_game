@@ -11,9 +11,7 @@ Action = str
 
 
 class ImprovedSnakeEnv:
-    def __init__(
-        self, grid_size: int = 15, block_size: int = 40, render_mode: str = "none"
-    ) -> None:
+    def __init__(self, grid_size: int, block_size: int, render_mode: str) -> None:
         self.grid_size = grid_size
         self.block_size = block_size
         self.render_mode = render_mode
@@ -99,7 +97,6 @@ class ImprovedSnakeEnv:
         elif action == "RIGHT":
             new_head = (head_x + 1, head_y)
 
-        # Safety check in case of invalid action
         if new_head is None:
             self.done = True
             return self.get_state(), -10, self.done
@@ -169,12 +166,10 @@ class ImprovedSnakeEnv:
             ),
         )
 
-        # Display time in top left
         elapsed_time = int(time.time() - self.start_time)
         time_text = font.render(f"Time: {elapsed_time}s", True, (255, 255, 255))
         screen.blit(time_text, (10, 10))
 
-        # Display score in top right
         score_text = font.render(f"Score: {self.score}", True, (255, 255, 255))
         score_rect = score_text.get_rect()
         score_rect.topright = (self.window_size - 10, 10)
