@@ -5,15 +5,24 @@ from typing import List, Optional, Tuple, cast
 # pylint: disable=no-member
 import pygame
 
-from utils import SnakeActions
-
-Point = Tuple[int, int]
-State = Tuple[int, int, int, int, int, int, int, int]
-Action = str
+from constants import (
+    Action,
+    Colors,
+    Point,
+    RewardConfig,
+    SnakeActions,
+    SnakeConfig,
+    State,
+)
 
 
 class ImprovedSnakeEnv:
-    def __init__(self, grid_size: int, block_size: int, render_mode: str) -> None:
+    def __init__(
+        self,
+        grid_size: int = SnakeConfig.DEFAULT_GRID_SIZE,
+        block_size: int = SnakeConfig.DEFAULT_BLOCK_SIZE,
+        render_mode: str = SnakeConfig.RENDER_MODE_NONE,
+    ) -> None:
         self.grid_size = grid_size
         self.block_size = block_size
         self.render_mode = render_mode
@@ -29,12 +38,12 @@ class ImprovedSnakeEnv:
         self.font: Optional[pygame.font.Font] = None
         self.reset()
 
-        if self.render_mode == "human":
+        if self.render_mode == SnakeConfig.RENDER_MODE_HUMAN:
             pygame.init()
             self.window_size = self.grid_size * self.block_size
             self.screen = pygame.display.set_mode((self.window_size, self.window_size))
             self.clock = pygame.time.Clock()
-            self.font = pygame.font.Font(None, 36)
+            self.font = pygame.font.Font(None, SnakeConfig.FONT_SIZE)
 
     def reset(self) -> State:
         self.snake = [
@@ -101,7 +110,7 @@ class ImprovedSnakeEnv:
 
         if new_head is None:
             self.done = True
-            return self.get_state(), -10, self.done
+            return self.get_state(), RewardConfig.COLLISION_PENALTY, self.done
 
         if (
             new_head[0] < 0
@@ -111,13 +120,13 @@ class ImprovedSnakeEnv:
             or new_head in self.snake
         ):
             self.done = True
-            return self.get_state(), -10, self.done
+            return self.get_state(), RewardConfig.COLLISION_PENALTY, self.done
 
         self.snake.insert(0, new_head)
 
         if new_head == self.food:
-            reward = 10
-            self.score += 10
+            reward = RewardConfig.FOOD_REWARD
+            self.score += RewardConfig.FOOD_REWARD
             self.food = (
                 random.randint(0, self.grid_size - 1),
                 random.randint(0, self.grid_size - 1),
@@ -126,13 +135,17 @@ class ImprovedSnakeEnv:
             self.snake.pop()
             old_dist = abs(head_x - self.food[0]) + abs(head_y - self.food[1])
             new_dist = abs(new_head[0] - self.food[0]) + abs(new_head[1] - self.food[1])
-            reward = 1 if new_dist < old_dist else -1
+            reward = (
+                RewardConfig.CLOSER_TO_FOOD
+                if new_dist < old_dist
+                else RewardConfig.AWAY_FROM_FOOD
+            )
 
         return self.get_state(), reward, self.done
 
     def render(self) -> None:
         if (
-            self.render_mode == "none"
+            self.render_mode == SnakeConfig.RENDER_MODE_NONE
             or self.screen is None
             or self.font is None
             or self.clock is None
@@ -143,12 +156,12 @@ class ImprovedSnakeEnv:
         font = cast(pygame.font.Font, self.font)
         clock = cast(pygame.time.Clock, self.clock)
 
-        screen.fill((0, 0, 0))
+        screen.fill(Colors.BLACK)
 
         for segment in self.snake:
             pygame.draw.rect(
                 screen,
-                (0, 255, 0),
+                Colors.GREEN,
                 (
                     segment[0] * self.block_size,
                     segment[1] * self.block_size,
@@ -159,7 +172,7 @@ class ImprovedSnakeEnv:
 
         pygame.draw.rect(
             screen,
-            (255, 0, 0),
+            Colors.RED,
             (
                 self.food[0] * self.block_size,
                 self.food[1] * self.block_size,
@@ -169,17 +182,17 @@ class ImprovedSnakeEnv:
         )
 
         elapsed_time = int(time.time() - self.start_time)
-        time_text = font.render(f"Time: {elapsed_time}s", True, (255, 255, 255))
+        time_text = font.render(f"Time: {elapsed_time}s", True, Colors.WHITE)
         screen.blit(time_text, (10, 10))
 
-        score_text = font.render(f"Score: {self.score}", True, (255, 255, 255))
+        score_text = font.render(f"Score: {self.score}", True, Colors.WHITE)
         score_rect = score_text.get_rect()
         score_rect.topright = (self.window_size - 10, 10)
         screen.blit(score_text, score_rect)
 
         pygame.display.flip()
-        clock.tick(10)
+        clock.tick(SnakeConfig.GAME_SPEED)
 
     def close(self) -> None:
-        if self.render_mode == "human":
+        if self.render_mode == SnakeConfig.RENDER_MODE_HUMAN:
             pygame.quit()
