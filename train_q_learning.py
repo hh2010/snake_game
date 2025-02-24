@@ -1,3 +1,4 @@
+import csv
 import pickle
 import random
 from typing import Dict, List
@@ -19,7 +20,7 @@ def train_q_learning() -> List[float]:
     all_episode_rewards: List[float] = []
 
     current_epsilon = TrainingConfig.EPSILON_START
-    for _ in range(TrainingConfig.NUM_EPISODES):
+    for episode in range(TrainingConfig.NUM_EPISODES):
         state = env.reset()
         total_reward = 0
 
@@ -66,6 +67,14 @@ def train_q_learning() -> List[float]:
 
     with open(FilePaths.Q_TABLE_PATH, "wb") as f:
         pickle.dump(Q_table, f)
+
+    with open(
+        FilePaths.OUTPUTS_DIR / "training_rewards.csv", "w", newline=""
+    ) as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["Episode", "Reward"])
+        for episode, reward in enumerate(all_episode_rewards):
+            writer.writerow([episode + 1, reward])
 
     return all_episode_rewards
 
