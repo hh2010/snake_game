@@ -27,6 +27,7 @@ class SnakeConfig:
     RENDER_MODE_NONE: Final[str] = "none"
     GAME_SPEED: Final[int] = 10
     FONT_SIZE: Final[int] = 36
+    METRICS_FONT_SIZE: Final[int] = 24
 
 
 @dataclass(frozen=True)

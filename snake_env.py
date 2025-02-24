@@ -19,15 +19,16 @@ from constants import (
 class ImprovedSnakeEnv:
     def __init__(
         self,
-        grid_size: int = SnakeConfig.DEFAULT_GRID_SIZE,
-        block_size: int = SnakeConfig.DEFAULT_BLOCK_SIZE,
-        render_mode: str = SnakeConfig.RENDER_MODE_NONE,
+        grid_size: int,
+        block_size: int,
+        render_mode: str,
     ) -> None:
         self.grid_size = grid_size
         self.block_size = block_size
         self.render_mode = render_mode
         self.score = 0
         self.start_time = time.time()
+        self.end_time: Optional[float] = None
         self.snake: List[Point] = []
         self.food: Point = (0, 0)
         self.direction: Action = "UP"
@@ -43,7 +44,7 @@ class ImprovedSnakeEnv:
             self.window_size = self.grid_size * self.block_size
             self.screen = pygame.display.set_mode((self.window_size, self.window_size))
             self.clock = pygame.time.Clock()
-            self.font = pygame.font.Font(None, SnakeConfig.FONT_SIZE)
+            self.font = pygame.font.Font(None, SnakeConfig.METRICS_FONT_SIZE)
 
     def reset(self) -> State:
         self.snake = [
@@ -60,6 +61,7 @@ class ImprovedSnakeEnv:
         self.done = False
         self.score = 0
         self.start_time = time.time()
+        self.end_time = None
         return self.get_state()
 
     def get_state(self) -> State:
@@ -99,17 +101,18 @@ class ImprovedSnakeEnv:
         head_x, head_y = self.snake[0]
         new_head = None
 
-        if action == SnakeActions.UP:
+        if action == SnakeActions.UP and self.direction != SnakeActions.DOWN:
             new_head = (head_x, head_y - 1)
-        elif action == SnakeActions.DOWN:
+        elif action == SnakeActions.DOWN and self.direction != SnakeActions.UP:
             new_head = (head_x, head_y + 1)
-        elif action == SnakeActions.LEFT:
+        elif action == SnakeActions.LEFT and self.direction != SnakeActions.RIGHT:
             new_head = (head_x - 1, head_y)
-        elif action == SnakeActions.RIGHT:
+        elif action == SnakeActions.RIGHT and self.direction != SnakeActions.LEFT:
             new_head = (head_x + 1, head_y)
 
         if new_head is None:
             self.done = True
+            self.end_time = time.time()
             return self.get_state(), RewardConfig.COLLISION_PENALTY, self.done
 
         if (
@@ -120,6 +123,7 @@ class ImprovedSnakeEnv:
             or new_head in self.snake
         ):
             self.done = True
+            self.end_time = time.time()
             return self.get_state(), RewardConfig.COLLISION_PENALTY, self.done
 
         self.snake.insert(0, new_head)
@@ -141,9 +145,10 @@ class ImprovedSnakeEnv:
                 else RewardConfig.AWAY_FROM_FOOD
             )
 
+        self.direction = action
         return self.get_state(), reward, self.done
 
-    def render(self) -> None:
+    def render(self, step_count: int, step_text: str, game_over_text: str) -> None:
         if (
             self.render_mode == SnakeConfig.RENDER_MODE_NONE
             or self.screen is None
@@ -181,14 +186,48 @@ class ImprovedSnakeEnv:
             ),
         )
 
-        elapsed_time = int(time.time() - self.start_time)
+        # Time display (top left)
+        elapsed_time = int(
+            self.end_time - self.start_time
+            if self.end_time
+            else time.time() - self.start_time
+        )
         time_text = font.render(f"Time: {elapsed_time}s", True, Colors.WHITE)
         screen.blit(time_text, (10, 10))
 
-        score_text = font.render(f"Score: {self.score}", True, Colors.WHITE)
-        score_rect = score_text.get_rect()
-        score_rect.topright = (self.window_size - 10, 10)
-        screen.blit(score_text, score_rect)
+        # Metrics display (top right)
+        metrics = [
+            f"Score: {self.score}",
+            f"Steps: {step_text or step_count}",
+        ]
+        y_offset = 10
+        for metric in metrics:
+            text = font.render(metric, True, Colors.WHITE)
+            rect = text.get_rect()
+            rect.topright = (self.window_size - 10, y_offset)
+            screen.blit(text, rect)
+            y_offset += 25  # Reduced from 30 to 25 for tighter spacing
+
+        # Game over text (center screen)
+        if game_over_text:
+            game_over_font = pygame.font.Font(
+                None, SnakeConfig.FONT_SIZE
+            )  # Keep game over text size the same
+            game_over_surface = game_over_font.render(
+                game_over_text, True, Colors.WHITE
+            )
+            game_over_rect = game_over_surface.get_rect(
+                center=(self.window_size // 2, self.window_size // 2)
+            )
+            screen.blit(game_over_surface, game_over_rect)
+
+            continue_surface = game_over_font.render(
+                "Press ENTER to continue", True, Colors.WHITE
+            )
+            continue_rect = continue_surface.get_rect(
+                center=(self.window_size // 2, self.window_size // 2 + 40)
+            )
+            screen.blit(continue_surface, continue_rect)
 
         pygame.display.flip()
         clock.tick(SnakeConfig.GAME_SPEED)
