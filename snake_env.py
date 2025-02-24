@@ -101,6 +101,15 @@ class ImprovedSnakeEnv:
         head_x, head_y = self.snake[0]
         new_head = None
 
+        # Prevent reversing direction: ignore the new action if it is directly opposite.
+        if (
+            (self.direction == SnakeActions.UP and action == SnakeActions.DOWN)
+            or (self.direction == SnakeActions.DOWN and action == SnakeActions.UP)
+            or (self.direction == SnakeActions.LEFT and action == SnakeActions.RIGHT)
+            or (self.direction == SnakeActions.RIGHT and action == SnakeActions.LEFT)
+        ):
+            action = self.direction
+
         if action == SnakeActions.UP and self.direction != SnakeActions.DOWN:
             new_head = (head_x, head_y - 1)
         elif action == SnakeActions.DOWN and self.direction != SnakeActions.UP:

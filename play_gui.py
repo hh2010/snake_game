@@ -1,5 +1,6 @@
 import argparse
 import pickle
+import random
 from typing import Dict, Optional
 
 # pylint: disable=no-member
@@ -23,14 +24,6 @@ def get_keyboard_action() -> Optional[str]:
     return None
 
 
-def format_steps(steps: int) -> str:
-    if steps >= 9999:
-        return "9999+"
-    elif steps >= 1000:
-        return f"{steps/1000:.3f}k"
-    return str(steps)
-
-
 def play_snake_gui(use_model: bool) -> None:
     Q_table: Optional[Dict[State, Dict[str, float]]] = None
     if use_model:
@@ -47,7 +40,7 @@ def play_snake_gui(use_model: bool) -> None:
     while running:
         state = env.reset()
         step_count = 0
-        current_action = SnakeActions.RIGHT  # Initialize with default direction
+        current_action = random.choice(SnakeActions.all())
         game_over = False
 
         while not game_over and running:
@@ -60,7 +53,6 @@ def play_snake_gui(use_model: bool) -> None:
             else:
                 new_action = get_keyboard_action()
                 if new_action is not None and new_action != current_action:
-                    step_count = min(step_count + 1, 9999)
                     current_action = new_action
                 action = current_action
 
@@ -74,7 +66,7 @@ def play_snake_gui(use_model: bool) -> None:
 
             env.render(
                 step_count=step_count,
-                step_text=format_steps(step_count),
+                step_text=str(step_count),
                 game_over_text="Game Over!" if game_over else "",
             )
 
@@ -92,7 +84,7 @@ def play_snake_gui(use_model: bool) -> None:
                                 break
                     env.render(
                         step_count=step_count,
-                        step_text=format_steps(step_count),
+                        step_text=str(step_count),
                         game_over_text="Game Over!",
                     )
                 if not game_over:
