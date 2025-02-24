@@ -1,5 +1,6 @@
 import csv
 import pickle
+import random
 from typing import Dict, List
 
 import matplotlib.pyplot as plt
@@ -12,8 +13,8 @@ from utils import get_best_action
 def train_q_learning() -> List[float]:
     Q_table: Dict[State, Dict[str, float]] = {}
     env = ImprovedSnakeEnv(
-        grid_size=TrainingConfig.GRID_SIZE,
-        block_size=TrainingConfig.BLOCK_SIZE,
+        grid_size=SnakeConfig.DEFAULT_GRID_SIZE,
+        block_size=SnakeConfig.DEFAULT_BLOCK_SIZE,
         render_mode=SnakeConfig.RENDER_MODE_NONE,
     )
     all_episode_rewards: List[float] = []
@@ -22,15 +23,17 @@ def train_q_learning() -> List[float]:
     for episode in range(TrainingConfig.NUM_EPISODES):
         state = env.reset()
         total_reward = 0
+        training_random = random.Random(RandomState.TRAINING_SEED)
 
         while True:
-            if RandomState.RANDOM.uniform(0, 1) < current_epsilon:
-                action = RandomState.RANDOM.choice(SnakeActions.all())
+            if training_random.uniform(0, 1) < current_epsilon:
+                action = env.random.choice(SnakeActions.all())
             else:
                 action = get_best_action(
                     state=state,
                     Q_table=Q_table,
                     actions=SnakeActions.all(),
+                    random_state=env.random,
                 )
 
             next_state, reward, done = env.step(action)
@@ -45,6 +48,7 @@ def train_q_learning() -> List[float]:
                 state=next_state,
                 Q_table=Q_table,
                 actions=SnakeActions.all(),
+                random_state=training_random,
             )
             Q_table[state][action] = Q_table[state][action] + TrainingConfig.ALPHA * (
                 reward

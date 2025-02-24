@@ -1,3 +1,4 @@
+import random
 import time
 from typing import List, Optional, Tuple, cast
 
@@ -38,6 +39,7 @@ class ImprovedSnakeEnv:
         self.screen: Optional[pygame.Surface] = None
         self.clock: Optional[pygame.time.Clock] = None
         self.font: Optional[pygame.font.Font] = None
+        self.random: random.Random = random.Random(RandomState.SEED)
         self.reset()
 
         if self.render_mode == SnakeConfig.RENDER_MODE_HUMAN:
@@ -48,18 +50,18 @@ class ImprovedSnakeEnv:
             self.font = pygame.font.Font(None, SnakeConfig.METRICS_FONT_SIZE)
 
     def reset(self) -> State:
-        RandomState.RANDOM.seed(RandomState.SEED)
+        self.random.seed(RandomState.SEED)
         self.snake = [
             (
-                RandomState.RANDOM.randint(1, self.grid_size - 2),
-                RandomState.RANDOM.randint(1, self.grid_size - 2),
+                self.random.randint(1, self.grid_size - 2),
+                self.random.randint(1, self.grid_size - 2),
             )
         ]
         self.food = (
-            RandomState.RANDOM.randint(0, self.grid_size - 1),
-            RandomState.RANDOM.randint(0, self.grid_size - 1),
+            self.random.randint(0, self.grid_size - 1),
+            self.random.randint(0, self.grid_size - 1),
         )
-        self.direction = RandomState.RANDOM.choice(SnakeActions.all())
+        self.direction = self.random.choice(SnakeActions.all())
         self.done = False
         self.score = 0
         self.model_score = 0
@@ -145,8 +147,8 @@ class ImprovedSnakeEnv:
             self.score += RewardConfig.FOOD_REWARD
             self.model_score += RewardConfig.FOOD_REWARD
             self.food = (
-                RandomState.RANDOM.randint(0, self.grid_size - 1),
-                RandomState.RANDOM.randint(0, self.grid_size - 1),
+                self.random.randint(0, self.grid_size - 1),
+                self.random.randint(0, self.grid_size - 1),
             )
         else:
             self.snake.pop()

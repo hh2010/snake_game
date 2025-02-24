@@ -47,14 +47,12 @@ class TrainingConfig:
     EPSILON_DECAY: Final[float] = 0.995
     EPSILON_MIN: Final[float] = 0.01
     NUM_EPISODES: Final[int] = 4990
-    GRID_SIZE: Final[int] = 10
-    BLOCK_SIZE: Final[int] = 40
 
 
 @dataclass(frozen=True)
 class RewardConfig:
-    COLLISION_PENALTY: Final[int] = -10
-    FOOD_REWARD: Final[int] = 10
+    COLLISION_PENALTY: Final[int] = -100
+    FOOD_REWARD: Final[int] = 50
     CLOSER_TO_FOOD: Final[int] = 1
     AWAY_FROM_FOOD: Final[int] = -1
 
@@ -70,4 +68,4 @@ class FilePaths:
 @dataclass(frozen=True)
 class RandomState:
     SEED: Final[int] = 42
-    RANDOM: Final[random.Random] = random.Random(SEED)
+    TRAINING_SEED: Final[int] = 69

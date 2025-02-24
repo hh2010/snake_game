@@ -6,7 +6,7 @@ from typing import Dict, Optional
 # pylint: disable=no-member
 import pygame
 
-from constants import FilePaths, RandomState, SnakeActions, SnakeConfig
+from constants import FilePaths, SnakeActions, SnakeConfig
 from snake_env import ImprovedSnakeEnv, State
 from utils import get_best_action
 
@@ -38,12 +38,9 @@ def play_snake_gui(use_model: bool) -> None:
     running = True
 
     while running:
-        # Reset the random state to ensure reproducibility
-        RandomState.RANDOM.seed(RandomState.SEED)
-
         state = env.reset()
         step_count = 0
-        current_action = RandomState.RANDOM.choice(SnakeActions.all())
+        current_action = env.random.choice(SnakeActions.all())
         game_over = False
 
         while not game_over and running:
@@ -52,7 +49,7 @@ def play_snake_gui(use_model: bool) -> None:
                     running = False
 
             if use_model and Q_table is not None:
-                action = get_best_action(state, Q_table, SnakeActions.all())
+                action = get_best_action(state, Q_table, SnakeActions.all(), env.random)
             else:
                 new_action = get_keyboard_action()
                 if new_action is not None and new_action != current_action:
