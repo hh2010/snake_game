@@ -1,5 +1,6 @@
 import argparse
 import pickle
+import time
 from typing import Dict, Optional
 
 # pylint: disable=no-member
@@ -37,6 +38,9 @@ def play_snake_gui(use_model: bool) -> None:
     running = True
 
     while running:
+        # Reset the random state to ensure reproducibility
+        RandomState.RANDOM.seed(RandomState.SEED)
+
         state = env.reset()
         step_count = 0
         current_action = RandomState.RANDOM.choice(SnakeActions.all())
@@ -90,7 +94,9 @@ def play_snake_gui(use_model: bool) -> None:
                     break
 
     env.close()
-    print("Game Over!")
+    print(
+        f"Game Over! Final Score: {env.score}, Model Score: {env.model_score}, Time: {int(env.end_time - env.start_time if env.end_time else time.time() - env.start_time)}s"
+    )
 
 
 if __name__ == "__main__":

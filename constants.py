@@ -46,7 +46,7 @@ class TrainingConfig:
     EPSILON_START: Final[float] = 1.0
     EPSILON_DECAY: Final[float] = 0.995
     EPSILON_MIN: Final[float] = 0.01
-    NUM_EPISODES: Final[int] = 4991
+    NUM_EPISODES: Final[int] = 4990
     GRID_SIZE: Final[int] = 10
     BLOCK_SIZE: Final[int] = 40
 
