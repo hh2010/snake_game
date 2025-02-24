@@ -31,7 +31,6 @@ def train_q_learning() -> List[float]:
                     state=state,
                     Q_table=Q_table,
                     actions=SnakeActions.all(),
-                    allow_random_on_tie=True,
                 )
 
             next_state, reward, done = env.step(action)
@@ -46,7 +45,6 @@ def train_q_learning() -> List[float]:
                 state=next_state,
                 Q_table=Q_table,
                 actions=SnakeActions.all(),
-                allow_random_on_tie=True,
             )
             Q_table[state][action] = Q_table[state][action] + TrainingConfig.ALPHA * (
                 reward
