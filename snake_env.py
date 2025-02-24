@@ -48,6 +48,7 @@ class ImprovedSnakeEnv:
             self.font = pygame.font.Font(None, SnakeConfig.METRICS_FONT_SIZE)
 
     def reset(self) -> State:
+        RandomState.RANDOM.seed(RandomState.SEED)
         self.snake = [
             (
                 RandomState.RANDOM.randint(1, self.grid_size - 2),

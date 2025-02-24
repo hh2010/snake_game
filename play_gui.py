@@ -37,9 +37,6 @@ def play_snake_gui(use_model: bool) -> None:
     running = True
 
     while running:
-        # Reset the random state to ensure reproducibility
-        RandomState.RANDOM.seed(RandomState.SEED)
-
         state = env.reset()
         step_count = 0
         current_action = RandomState.RANDOM.choice(SnakeActions.all())
