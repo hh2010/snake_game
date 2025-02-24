@@ -49,8 +49,8 @@ class ImprovedSnakeEnv:
     def reset(self) -> State:
         self.snake = [
             (
-                random.randint(0, self.grid_size - 1),
-                random.randint(0, self.grid_size - 1),
+                random.randint(1, self.grid_size - 2),
+                random.randint(1, self.grid_size - 2),
             )
         ]
         self.food = (
@@ -110,13 +110,13 @@ class ImprovedSnakeEnv:
         ):
             action = self.direction
 
-        if action == SnakeActions.UP and self.direction != SnakeActions.DOWN:
+        if action == SnakeActions.UP:
             new_head = (head_x, head_y - 1)
-        elif action == SnakeActions.DOWN and self.direction != SnakeActions.UP:
+        elif action == SnakeActions.DOWN:
             new_head = (head_x, head_y + 1)
-        elif action == SnakeActions.LEFT and self.direction != SnakeActions.RIGHT:
+        elif action == SnakeActions.LEFT:
             new_head = (head_x - 1, head_y)
-        elif action == SnakeActions.RIGHT and self.direction != SnakeActions.LEFT:
+        elif action == SnakeActions.RIGHT:
             new_head = (head_x + 1, head_y)
 
         if new_head is None:
