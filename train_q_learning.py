@@ -1,11 +1,10 @@
 import csv
 import pickle
-import random
 from typing import Dict, List
 
 import matplotlib.pyplot as plt
 
-from constants import FilePaths, SnakeActions, SnakeConfig, TrainingConfig
+from constants import FilePaths, RandomState, SnakeActions, SnakeConfig, TrainingConfig
 from snake_env import ImprovedSnakeEnv, State
 from utils import get_best_action
 
@@ -25,8 +24,8 @@ def train_q_learning() -> List[float]:
         total_reward = 0
 
         while True:
-            if random.uniform(0, 1) < current_epsilon:
-                action = random.choice(SnakeActions.all())
+            if RandomState.RANDOM.uniform(0, 1) < current_epsilon:
+                action = RandomState.RANDOM.choice(SnakeActions.all())
             else:
                 action = get_best_action(
                     state=state,
@@ -69,7 +68,10 @@ def train_q_learning() -> List[float]:
         pickle.dump(Q_table, f)
 
     with open(
-        FilePaths.OUTPUTS_DIR / "training_rewards.csv", "w", newline=""
+        FilePaths.OUTPUTS_DIR / "training_rewards.csv",
+        "w",
+        newline="",
+        encoding="utf-8",
     ) as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(["Episode", "Reward"])

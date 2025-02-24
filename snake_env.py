@@ -1,4 +1,3 @@
-import random
 import time
 from typing import List, Optional, Tuple, cast
 
@@ -9,6 +8,7 @@ from constants import (
     Action,
     Colors,
     Point,
+    RandomState,
     RewardConfig,
     SnakeActions,
     SnakeConfig,
@@ -49,15 +49,15 @@ class ImprovedSnakeEnv:
     def reset(self) -> State:
         self.snake = [
             (
-                random.randint(1, self.grid_size - 2),
-                random.randint(1, self.grid_size - 2),
+                RandomState.RANDOM.randint(1, self.grid_size - 2),
+                RandomState.RANDOM.randint(1, self.grid_size - 2),
             )
         ]
         self.food = (
-            random.randint(0, self.grid_size - 1),
-            random.randint(0, self.grid_size - 1),
+            RandomState.RANDOM.randint(0, self.grid_size - 1),
+            RandomState.RANDOM.randint(0, self.grid_size - 1),
         )
-        self.direction = random.choice(SnakeActions.all())
+        self.direction = RandomState.RANDOM.choice(SnakeActions.all())
         self.done = False
         self.score = 0
         self.start_time = time.time()
@@ -141,8 +141,8 @@ class ImprovedSnakeEnv:
             reward = RewardConfig.FOOD_REWARD
             self.score += RewardConfig.FOOD_REWARD
             self.food = (
-                random.randint(0, self.grid_size - 1),
-                random.randint(0, self.grid_size - 1),
+                RandomState.RANDOM.randint(0, self.grid_size - 1),
+                RandomState.RANDOM.randint(0, self.grid_size - 1),
             )
         else:
             self.snake.pop()

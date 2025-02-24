@@ -1,3 +1,4 @@
+import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, List, TypeAlias
@@ -45,7 +46,7 @@ class TrainingConfig:
     EPSILON_START: Final[float] = 1.0
     EPSILON_DECAY: Final[float] = 0.995
     EPSILON_MIN: Final[float] = 0.01
-    NUM_EPISODES: Final[int] = 5000
+    NUM_EPISODES: Final[int] = 4992
     GRID_SIZE: Final[int] = 10
     BLOCK_SIZE: Final[int] = 40
 
@@ -64,3 +65,9 @@ class FilePaths:
     OUTPUTS_DIR: Final[Path] = Path("outputs")
     Q_TABLE_PATH: Final[Path] = MODELS_DIR / "q_table.pkl"
     TRAINING_PLOT_PATH: Final[Path] = OUTPUTS_DIR / "training_plot.png"
+
+
+@dataclass(frozen=True)
+class RandomState:
+    SEED: Final[int] = 42
+    RANDOM: Final[random.Random] = random.Random(SEED)

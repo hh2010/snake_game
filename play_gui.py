@@ -1,12 +1,11 @@
 import argparse
 import pickle
-import random
 from typing import Dict, Optional
 
 # pylint: disable=no-member
 import pygame
 
-from constants import FilePaths, SnakeActions, SnakeConfig
+from constants import FilePaths, RandomState, SnakeActions, SnakeConfig
 from snake_env import ImprovedSnakeEnv, State
 from utils import get_best_action
 
@@ -38,9 +37,12 @@ def play_snake_gui(use_model: bool) -> None:
     running = True
 
     while running:
+        # Reset the random state to ensure reproducibility
+        RandomState.RANDOM.seed(RandomState.SEED)
+
         state = env.reset()
         step_count = 0
-        current_action = random.choice(SnakeActions.all())
+        current_action = RandomState.RANDOM.choice(SnakeActions.all())
         game_over = False
 
         while not game_over and running:
