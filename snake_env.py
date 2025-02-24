@@ -27,6 +27,7 @@ class ImprovedSnakeEnv:
         self.block_size = block_size
         self.render_mode = render_mode
         self.score = 0
+        self.model_score = 0
         self.start_time = time.time()
         self.end_time: Optional[float] = None
         self.snake: List[Point] = []
@@ -60,6 +61,7 @@ class ImprovedSnakeEnv:
         self.direction = RandomState.RANDOM.choice(SnakeActions.all())
         self.done = False
         self.score = 0
+        self.model_score = 0
         self.start_time = time.time()
         self.end_time = None
         return self.get_state()
@@ -140,6 +142,7 @@ class ImprovedSnakeEnv:
         if new_head == self.food:
             reward = RewardConfig.FOOD_REWARD
             self.score += RewardConfig.FOOD_REWARD
+            self.model_score += RewardConfig.FOOD_REWARD
             self.food = (
                 RandomState.RANDOM.randint(0, self.grid_size - 1),
                 RandomState.RANDOM.randint(0, self.grid_size - 1),
@@ -153,6 +156,7 @@ class ImprovedSnakeEnv:
                 if new_dist < old_dist
                 else RewardConfig.AWAY_FROM_FOOD
             )
+            self.model_score += reward
 
         self.direction = action
         return self.get_state(), reward, self.done
@@ -207,6 +211,7 @@ class ImprovedSnakeEnv:
         # Metrics display (top right)
         metrics = [
             f"Score: {self.score}",
+            f"Model Score: {self.model_score}",
             f"Steps: {step_text or step_count}",
         ]
         y_offset = 10
