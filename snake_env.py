@@ -40,6 +40,9 @@ class ImprovedSnakeEnv:
         self.clock: Optional[pygame.time.Clock] = None
         self.font: Optional[pygame.font.Font] = None
         self.random: random.Random = random.Random(RandomState.SEED)
+        self.episode_rewards: List[float] = []
+        self.current_episode_reward = 0.0
+
         self.reset()
 
         if self.render_mode == SnakeConfig.RENDER_MODE_HUMAN:
@@ -50,6 +53,8 @@ class ImprovedSnakeEnv:
             self.font = pygame.font.Font(None, SnakeConfig.METRICS_FONT_SIZE)
 
     def reset(self) -> State:
+        self.episode_rewards.append(self.current_episode_reward)
+
         self.random.seed(RandomState.SEED)
         self.snake = [
             (
@@ -67,6 +72,7 @@ class ImprovedSnakeEnv:
         self.model_score = 0
         self.start_time = time.time()
         self.end_time = None
+        self.current_episode_reward = 0.0
         return self.get_state()
 
     def get_state(self) -> State:
@@ -127,7 +133,9 @@ class ImprovedSnakeEnv:
         if new_head is None:
             self.done = True
             self.end_time = time.time()
-            return self.get_state(), RewardConfig.COLLISION_PENALTY, self.done
+            reward = RewardConfig.COLLISION_PENALTY
+            self.current_episode_reward += reward
+            return self.get_state(), reward, self.done
 
         if (
             new_head[0] < 0
@@ -138,7 +146,9 @@ class ImprovedSnakeEnv:
         ):
             self.done = True
             self.end_time = time.time()
-            return self.get_state(), RewardConfig.COLLISION_PENALTY, self.done
+            reward = RewardConfig.COLLISION_PENALTY
+            self.current_episode_reward += reward
+            return self.get_state(), reward, self.done
 
         self.snake.insert(0, new_head)
 
@@ -161,6 +171,7 @@ class ImprovedSnakeEnv:
             )
             self.model_score += reward
 
+        self.current_episode_reward += reward
         self.direction = action
         return self.get_state(), reward, self.done
 
@@ -223,13 +234,11 @@ class ImprovedSnakeEnv:
             rect = text.get_rect()
             rect.topright = (self.window_size - 10, y_offset)
             screen.blit(text, rect)
-            y_offset += 25  # Reduced from 30 to 25 for tighter spacing
+            y_offset += 25
 
         # Game over text (center screen)
         if game_over_text:
-            game_over_font = pygame.font.Font(
-                None, SnakeConfig.FONT_SIZE
-            )  # Keep game over text size the same
+            game_over_font = pygame.font.Font(None, SnakeConfig.FONT_SIZE)
             game_over_surface = game_over_font.render(
                 game_over_text, True, Colors.WHITE
             )
@@ -252,3 +261,6 @@ class ImprovedSnakeEnv:
     def close(self) -> None:
         if self.render_mode == SnakeConfig.RENDER_MODE_HUMAN:
             pygame.quit()
+
+    def get_episode_rewards(self) -> List[float]:
+        return self.episode_rewards

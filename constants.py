@@ -1,7 +1,9 @@
+import os
 import random
+import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, List, TypeAlias
+from typing import Any, Callable, Final, List, Tuple, TypeAlias
 
 Point: TypeAlias = tuple[int, int]
 State: TypeAlias = tuple[int, int, int, int, int, int, int, int]
@@ -47,6 +49,7 @@ class TrainingConfig:
     EPSILON_DECAY: Final[float] = 0.995
     EPSILON_MIN: Final[float] = 0.01
     NUM_EPISODES: Final[int] = 4990
+    PROGRESS_REPORT_INTERVAL: Final[int] = 100
 
 
 @dataclass(frozen=True)
@@ -63,9 +66,58 @@ class FilePaths:
     OUTPUTS_DIR: Final[Path] = Path("outputs")
     Q_TABLE_PATH: Final[Path] = MODELS_DIR / "q_table.pkl"
     TRAINING_PLOT_PATH: Final[Path] = OUTPUTS_DIR / "training_plot.png"
+    TRAINING_REWARDS_PATH: Final[Path] = OUTPUTS_DIR / "training_rewards.csv"
 
 
 @dataclass(frozen=True)
 class RandomState:
     SEED: Final[int] = 42
     TRAINING_SEED: Final[int] = 69
+
+
+@dataclass(frozen=True)
+class PlotConfig:
+    FIGURE_SIZE: Final[Tuple[int, int]] = (10, 6)
+    TITLE: Final[str] = "Training Progress of Q-Learning Snake Agent"
+    X_LABEL: Final[str] = "Episode"
+    Y_LABEL: Final[str] = "Total Reward"
+
+
+@dataclass(frozen=True)
+class ModelType:
+    QLEARNING: Final[str] = "qlearning"
+
+    @staticmethod
+    def from_string(model_type: str) -> str:
+        model_type = model_type.lower()
+        if model_type in [ModelType.QLEARNING]:
+            return ModelType.QLEARNING
+        raise ValueError(f"Unknown model type: {model_type}")
+
+    @staticmethod
+    def create_agent(model_type: str) -> Any:
+        model_type = ModelType.from_string(model_type)
+        if model_type == ModelType.QLEARNING:
+            from agents.qlearning_agent import QLearningAgent
+
+            return QLearningAgent()
+        raise ValueError(f"No agent implementation for model type: {model_type}")
+
+    @staticmethod
+    def extract_from_filename(filename: str) -> str:
+        # Extract model type from filename like "20250224230142_qlearning.pkl"
+        pattern = r"_(\w+)(?:_|\.)"
+        match = re.search(pattern, filename)
+        if match:
+            return match.group(1)
+        raise ValueError(f"Could not extract model type from filename: {filename}")
+
+
+def create_default_environment(render_mode: str) -> Any:
+    from snake_env import ImprovedSnakeEnv
+
+    return ImprovedSnakeEnv(
+        grid_size=SnakeConfig.DEFAULT_GRID_SIZE,
+        block_size=SnakeConfig.DEFAULT_BLOCK_SIZE,
+        render_mode=render_mode,
+    )
