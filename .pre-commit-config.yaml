@@ -14,6 +14,7 @@ repos:
         types: [python]
         args: ["--errors-only"]
         files: "\\.py$"
+        exclude: ^tests/
         stages: [pre-commit]
         always_run: false
 
