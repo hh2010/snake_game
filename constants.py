@@ -54,10 +54,10 @@ class TrainingConfig:
 
 @dataclass(frozen=True)
 class RewardConfig:
-    COLLISION_PENALTY: Final[int] = -100
-    FOOD_REWARD: Final[int] = 50
-    CLOSER_TO_FOOD: Final[int] = 1
-    AWAY_FROM_FOOD: Final[int] = -1
+    COLLISION_PENALTY: Final[int] = -2
+    FOOD_REWARD: Final[int] = 1
+    CLOSER_TO_FOOD: Final[int] = 0.02
+    AWAY_FROM_FOOD: Final[int] = -0.02
 
 
 @dataclass(frozen=True)
