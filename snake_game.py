@@ -2,7 +2,6 @@ import argparse
 import datetime
 import os
 import sys
-import time
 from typing import Optional
 
 # pylint: disable=no-member
@@ -116,11 +115,6 @@ def play_agent(model_path: Optional[str], headless: bool = False) -> None:
         step_count += 1
 
     env.close()
-    total_time = (
-        int(env.end_time - env.start_time)
-        if env.end_time
-        else int(time.time() - env.start_time)
-    )
 
     # Add separator lines to make results more visible
     print("\n" + "=" * 50)
@@ -130,9 +124,6 @@ def play_agent(model_path: Optional[str], headless: bool = False) -> None:
     print(f"Final Score: {env.score}")
     print(f"Model Score: {env.model_score}")
     print(f"Steps: {step_count}")
-    print(f"Time: {total_time}s")
-    if total_time > 0:
-        print(f"Avg Steps per Second: {step_count/total_time:.1f}")
     print("=" * 50)
 
 

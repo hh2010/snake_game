@@ -1,5 +1,4 @@
 import random
-import time
 from typing import List, Optional, Tuple, cast
 
 # pylint: disable=no-member
@@ -29,8 +28,6 @@ class ImprovedSnakeEnv:
         self.render_mode = render_mode
         self.score = 0
         self.model_score = 0
-        self.start_time = time.time()
-        self.end_time: Optional[float] = None
         self.snake: List[Point] = []
         self.food: Point = (0, 0)
         self.direction: Action = "UP"
@@ -70,8 +67,6 @@ class ImprovedSnakeEnv:
         self.done = False
         self.score = 0
         self.model_score = 0
-        self.start_time = time.time()
-        self.end_time = None
         self.current_episode_reward = 0.0
         return self.get_state()
 
@@ -132,7 +127,6 @@ class ImprovedSnakeEnv:
 
         if new_head is None:
             self.done = True
-            self.end_time = time.time()
             reward = RewardConfig.COLLISION_PENALTY
             self.current_episode_reward += reward
             return self.get_state(), reward, self.done
@@ -145,7 +139,6 @@ class ImprovedSnakeEnv:
             or new_head in self.snake
         ):
             self.done = True
-            self.end_time = time.time()
             reward = RewardConfig.COLLISION_PENALTY
             self.current_episode_reward += reward
             return self.get_state(), reward, self.done
@@ -212,15 +205,6 @@ class ImprovedSnakeEnv:
                 self.block_size,
             ),
         )
-
-        # Time display (top left)
-        elapsed_time = int(
-            self.end_time - self.start_time
-            if self.end_time
-            else time.time() - self.start_time
-        )
-        time_text = font.render(f"Time: {elapsed_time}s", True, Colors.WHITE)
-        screen.blit(time_text, (10, 10))
 
         # Metrics display (top right)
         metrics = [
