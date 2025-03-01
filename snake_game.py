@@ -58,8 +58,10 @@ def wait_for_restart_or_quit() -> bool:
     return False
 
 
-def play_agent(model_path: Optional[str]) -> None:
-    env = create_default_environment(SnakeConfig.RENDER_MODE_HUMAN)
+def play_agent(model_path: Optional[str], headless: bool = False) -> None:
+    env = create_default_environment(
+        SnakeConfig.RENDER_MODE_NONE if headless else SnakeConfig.RENDER_MODE_HUMAN
+    )
     use_model = False
     agent = None
 
@@ -74,40 +76,44 @@ def play_agent(model_path: Optional[str]) -> None:
             sys.exit(1)
 
     running = True
-    while running:
-        state = env.reset()
-        step_count = 0
-        current_action = env.random.choice(SnakeActions.all())
-        game_over = False
+    state = env.reset()
+    step_count = 0
 
-        while not game_over and running:
+    while running:
+        if use_model and agent:
+            action = agent.choose_action(state)
+        else:
+            # In headless mode, we don't handle player input
+            if headless:
+                running = False
+                break
+            new_action = handle_player_input()
+            if new_action is not None:
+                action = new_action
+            else:
+                action = env.direction  # Continue in current direction
+
+        next_state, _, done = env.step(action)
+        state = next_state
+
+        if not headless:
+            env.render(step_count, str(step_count), "Game Over!" if done else "")
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
 
-            if use_model and agent:
-                action = agent.choose_action(state)
-            else:
-                new_action = handle_player_input()
-                if new_action is not None and new_action != current_action:
-                    current_action = new_action
-                action = current_action
-
-            next_state, _, done = env.step(action)
-            state = next_state
-            if done:
-                game_over = True
-                if use_model:
-                    running = False
-
-            env.render(step_count, str(step_count), "Game Over!" if game_over else "")
-
-            if game_over and not use_model:
+        if done:
+            if use_model:
+                running = False
+            elif not headless:
                 running = wait_for_restart_or_quit()
                 if running:
-                    break
+                    state = env.reset()
+                    step_count = 0
+                    continue
 
-            step_count += 1
+        step_count += 1
 
     env.close()
     total_time = (
@@ -115,9 +121,19 @@ def play_agent(model_path: Optional[str]) -> None:
         if env.end_time
         else int(time.time() - env.start_time)
     )
-    print(
-        f"Game Over! Final Score: {env.score}, Model Score: {env.model_score}, Time: {total_time}s"
-    )
+
+    # Add separator lines to make results more visible
+    print("\n" + "=" * 50)
+    print("FINAL RESULTS:")
+    print("=" * 50)
+    print(f"Model Type: {model_type if use_model else 'human'}")
+    print(f"Final Score: {env.score}")
+    print(f"Model Score: {env.model_score}")
+    print(f"Steps: {step_count}")
+    print(f"Time: {total_time}s")
+    if total_time > 0:
+        print(f"Avg Steps per Second: {step_count/total_time:.1f}")
+    print("=" * 50)
 
 
 def main() -> None:
@@ -133,6 +149,7 @@ def main() -> None:
 
     play_parser = subparsers.add_parser("play")
     play_parser.add_argument("--model", type=str, default="")
+    play_parser.add_argument("--headless", action="store_true", help="Run without GUI")
 
     args = parser.parse_args()
 
@@ -140,7 +157,7 @@ def main() -> None:
         train_agent(args.type, args.episodes, args.suffix)
     elif args.command == "play":
         model_path = args.model if args.model != "" else None
-        play_agent(model_path)
+        play_agent(model_path, args.headless)
 
 
 if __name__ == "__main__":
