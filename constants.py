@@ -86,15 +86,12 @@ class PlotConfig:
 @dataclass(frozen=True)
 class ModelType:
     QLEARNING: Final[str] = "qlearning"
-    SPACEFILL: Final[str] = "spacefill"
 
     @staticmethod
     def from_string(model_type: str) -> str:
         model_type = model_type.lower()
         if model_type in [ModelType.QLEARNING]:
             return ModelType.QLEARNING
-        elif model_type in [ModelType.SPACEFILL, "space_fill", "space-fill"]:
-            return ModelType.SPACEFILL
         raise ValueError(f"Unknown model type: {model_type}")
 
     @staticmethod
@@ -104,16 +101,12 @@ class ModelType:
             from agents.qlearning_agent import QLearningAgent
 
             return QLearningAgent()
-        elif model_type == ModelType.SPACEFILL:
-            from agents.spacefill_agent import SpaceFillingAgent
-
-            return SpaceFillingAgent()
         raise ValueError(f"No agent implementation for model type: {model_type}")
 
     @staticmethod
     def extract_from_filename(filename: str) -> str:
         # First check if the filename is just the model type itself
-        if filename.lower() in [ModelType.QLEARNING, ModelType.SPACEFILL]:
+        if filename.lower() in [ModelType.QLEARNING]:
             return filename.lower()
 
         # Extract model type from filename like "20250224230142_qlearning.pkl"
