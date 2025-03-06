@@ -57,10 +57,20 @@ def wait_for_restart_or_quit() -> bool:
                 return True
 
 
-def play_agent(model_path: Optional[str], headless: bool, enable_logging: bool) -> None:
+def play_agent(
+    model_path: Optional[str],
+    headless: bool,
+    enable_logging: bool,
+    game_speed: Optional[int] = None,
+) -> None:
     env = create_default_environment(
         SnakeConfig.RENDER_MODE_NONE if headless else SnakeConfig.RENDER_MODE_HUMAN
     )
+
+    # Set custom game speed if provided
+    if game_speed is not None:
+        env.game_speed = game_speed
+
     use_model = False
     agent = None
     model_type = "human"
@@ -153,6 +163,9 @@ def main() -> None:
     play_parser.add_argument(
         "--logging", action="store_true", help="Enable detailed logging"
     )
+    play_parser.add_argument(
+        "--speed", type=int, help=f"Game speed (default: {SnakeConfig.GAME_SPEED})"
+    )
 
     args = parser.parse_args()
 
@@ -160,7 +173,7 @@ def main() -> None:
         train_agent(args.type, args.episodes, args.suffix, args.logging)
     elif args.command == "play":
         model_path = args.model if args.model != "" else None
-        play_agent(model_path, args.headless, args.logging)
+        play_agent(model_path, args.headless, args.logging, args.speed)
 
 
 if __name__ == "__main__":

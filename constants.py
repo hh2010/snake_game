@@ -87,11 +87,18 @@ class PlotConfig:
 class ModelType:
     QLEARNING: Final[str] = "qlearning"
     HAMILTONIAN: Final[str] = "hamiltonian"
+    BFS: Final[str] = "bfs"
+    BFS_HAMILTONIAN: Final[str] = "bfs_hamiltonian"
 
     @staticmethod
     def from_string(model_type: str) -> str:
         model_type = model_type.lower()
-        if model_type in [ModelType.QLEARNING, ModelType.HAMILTONIAN]:
+        if model_type in [
+            ModelType.QLEARNING,
+            ModelType.HAMILTONIAN,
+            ModelType.BFS,
+            ModelType.BFS_HAMILTONIAN,
+        ]:
             return model_type
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -106,12 +113,25 @@ class ModelType:
             from agents.hamiltonian_agent import HamiltonianAgent
 
             return HamiltonianAgent(enable_logging=enable_logging)
+        elif model_type == ModelType.BFS:
+            from agents.bfs_agent import BFSAgent
+
+            return BFSAgent(enable_logging=enable_logging)
+        elif model_type == ModelType.BFS_HAMILTONIAN:
+            from agents.bfs_hamiltonian_agent import BFSHamiltonianAgent
+
+            return BFSHamiltonianAgent(enable_logging=enable_logging)
         raise ValueError(f"No agent implementation for model type: {model_type}")
 
     @staticmethod
     def extract_from_filename(filename: str) -> str:
         # First check if the filename is just the model type itself
-        if filename.lower() in [ModelType.QLEARNING, ModelType.HAMILTONIAN]:
+        if filename.lower() in [
+            ModelType.QLEARNING,
+            ModelType.HAMILTONIAN,
+            ModelType.BFS,
+            ModelType.BFS_HAMILTONIAN,
+        ]:
             return filename.lower()
 
         # Extract model type from filename like "20250224230142_qlearning.pkl"

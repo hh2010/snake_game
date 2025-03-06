@@ -39,6 +39,7 @@ class ImprovedSnakeEnv:
         self.random: random.Random = random.Random(RandomState.SEED)
         self.episode_rewards: List[float] = []
         self.current_episode_reward = 0.0
+        self.game_speed: int = SnakeConfig.GAME_SPEED
 
         self.reset()
 
@@ -211,6 +212,7 @@ class ImprovedSnakeEnv:
             f"Score: {self.score}",
             f"Model Score: {self.model_score}",
             f"Steps: {step_text or step_count}",
+            f"Speed: {self.game_speed}",
         ]
         y_offset = 10
         for metric in metrics:
@@ -240,7 +242,7 @@ class ImprovedSnakeEnv:
             screen.blit(continue_surface, continue_rect)
 
         pygame.display.flip()
-        clock.tick(SnakeConfig.GAME_SPEED)
+        clock.tick(self.game_speed)  # Use the instance's game_speed attribute
 
     def close(self) -> None:
         if self.render_mode == SnakeConfig.RENDER_MODE_HUMAN:
