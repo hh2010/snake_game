@@ -17,10 +17,12 @@ from constants import (
 )
 
 
-def train_agent(model_type: str, num_episodes: int, suffix: Optional[str]) -> None:
+def train_agent(
+    model_type: str, num_episodes: int, suffix: Optional[str], enable_logging: bool
+) -> None:
     env = create_default_environment(SnakeConfig.RENDER_MODE_NONE)
     try:
-        agent = ModelType.create_agent(model_type)
+        agent = ModelType.create_agent(model_type, enable_logging)
     except ValueError as e:
         print(str(e))
         sys.exit(1)
@@ -47,29 +49,35 @@ def handle_player_input() -> Optional[str]:
 
 
 def wait_for_restart_or_quit() -> bool:
-    waiting_for_input = True
-    while waiting_for_input:
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 return True
-    return False
 
 
-def play_agent(model_path: Optional[str], headless: bool = False) -> None:
+def play_agent(model_path: Optional[str], headless: bool, enable_logging: bool) -> None:
     env = create_default_environment(
         SnakeConfig.RENDER_MODE_NONE if headless else SnakeConfig.RENDER_MODE_HUMAN
     )
     use_model = False
     agent = None
+    model_type = "human"
 
     if model_path:
         use_model = True
         try:
-            model_type = ModelType.extract_from_filename(os.path.basename(model_path))
-            agent = ModelType.create_agent(model_type)
-            agent.load(model_path)
+            try:
+                model_type = ModelType.from_string(model_path)
+                agent = ModelType.create_agent(model_type, enable_logging)
+            except ValueError:
+                model_type = ModelType.extract_from_filename(
+                    os.path.basename(model_path)
+                )
+                agent = ModelType.create_agent(model_type, enable_logging)
+                if os.path.exists(model_path):
+                    agent.load(model_path)
         except ValueError as e:
             print(str(e))
             sys.exit(1)
@@ -82,7 +90,6 @@ def play_agent(model_path: Optional[str], headless: bool = False) -> None:
         if use_model and agent:
             action = agent.choose_action(state)
         else:
-            # In headless mode, we don't handle player input
             if headless:
                 running = False
                 break
@@ -90,7 +97,7 @@ def play_agent(model_path: Optional[str], headless: bool = False) -> None:
             if new_action is not None:
                 action = new_action
             else:
-                action = env.direction  # Continue in current direction
+                action = env.direction
 
         next_state, _, done = env.step(action)
         state = next_state
@@ -116,7 +123,6 @@ def play_agent(model_path: Optional[str], headless: bool = False) -> None:
 
     env.close()
 
-    # Add separator lines to make results more visible
     print("\n" + "=" * 50)
     print("FINAL RESULTS:")
     print("=" * 50)
@@ -137,18 +143,24 @@ def main() -> None:
         "--episodes", type=int, default=TrainingConfig.NUM_EPISODES
     )
     train_parser.add_argument("--suffix", type=str, default="")
+    train_parser.add_argument(
+        "--logging", action="store_true", help="Enable detailed logging"
+    )
 
     play_parser = subparsers.add_parser("play")
     play_parser.add_argument("--model", type=str, default="")
     play_parser.add_argument("--headless", action="store_true", help="Run without GUI")
+    play_parser.add_argument(
+        "--logging", action="store_true", help="Enable detailed logging"
+    )
 
     args = parser.parse_args()
 
     if args.command == "train":
-        train_agent(args.type, args.episodes, args.suffix)
+        train_agent(args.type, args.episodes, args.suffix, args.logging)
     elif args.command == "play":
         model_path = args.model if args.model != "" else None
-        play_agent(model_path, args.headless)
+        play_agent(model_path, args.headless, args.logging)
 
 
 if __name__ == "__main__":

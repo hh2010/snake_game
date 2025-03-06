@@ -3,7 +3,7 @@ import random
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Final, List, Tuple, TypeAlias
+from typing import Any, Final, List, Tuple, TypeAlias
 
 Point: TypeAlias = tuple[int, int]
 State: TypeAlias = tuple[int, int, int, int, int, int, int, int]
@@ -24,7 +24,7 @@ class SnakeActions:
 
 @dataclass(frozen=True)
 class SnakeConfig:
-    DEFAULT_GRID_SIZE: Final[int] = 15
+    DEFAULT_GRID_SIZE: Final[int] = 16
     DEFAULT_BLOCK_SIZE: Final[int] = 40
     RENDER_MODE_HUMAN: Final[str] = "human"
     RENDER_MODE_NONE: Final[str] = "none"
@@ -56,8 +56,8 @@ class TrainingConfig:
 class RewardConfig:
     COLLISION_PENALTY: Final[int] = -2
     FOOD_REWARD: Final[int] = 1
-    CLOSER_TO_FOOD: Final[int] = 0.02
-    AWAY_FROM_FOOD: Final[int] = -0.02
+    CLOSER_TO_FOOD: Final[float] = 0.02
+    AWAY_FROM_FOOD: Final[float] = -0.02
 
 
 @dataclass(frozen=True)
@@ -86,27 +86,32 @@ class PlotConfig:
 @dataclass(frozen=True)
 class ModelType:
     QLEARNING: Final[str] = "qlearning"
+    HAMILTONIAN: Final[str] = "hamiltonian"
 
     @staticmethod
     def from_string(model_type: str) -> str:
         model_type = model_type.lower()
-        if model_type in [ModelType.QLEARNING]:
-            return ModelType.QLEARNING
+        if model_type in [ModelType.QLEARNING, ModelType.HAMILTONIAN]:
+            return model_type
         raise ValueError(f"Unknown model type: {model_type}")
 
     @staticmethod
-    def create_agent(model_type: str) -> Any:
+    def create_agent(model_type: str, enable_logging: bool) -> Any:
         model_type = ModelType.from_string(model_type)
         if model_type == ModelType.QLEARNING:
             from agents.qlearning_agent import QLearningAgent
 
             return QLearningAgent()
+        elif model_type == ModelType.HAMILTONIAN:
+            from agents.hamiltonian_agent import HamiltonianAgent
+
+            return HamiltonianAgent(enable_logging=enable_logging)
         raise ValueError(f"No agent implementation for model type: {model_type}")
 
     @staticmethod
     def extract_from_filename(filename: str) -> str:
         # First check if the filename is just the model type itself
-        if filename.lower() in [ModelType.QLEARNING]:
+        if filename.lower() in [ModelType.QLEARNING, ModelType.HAMILTONIAN]:
             return filename.lower()
 
         # Extract model type from filename like "20250224230142_qlearning.pkl"

@@ -37,3 +37,4 @@ ENV/
 *.pkl
 *.png
 *.csv
+logs/
