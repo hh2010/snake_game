@@ -11,3 +11,6 @@ class BaseAgent(Protocol):
 
     @classmethod
     def create(cls, enable_logging: bool) -> "BaseAgent": ...
+
+    @property
+    def requires_training(self) -> bool: ...

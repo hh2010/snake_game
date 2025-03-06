@@ -18,11 +18,19 @@ from constants import (
 
 
 def train_agent(
-    model_type: str, num_episodes: int, suffix: Optional[str], enable_logging: bool
+    agent_type: str, num_episodes: int, suffix: Optional[str], enable_logging: bool
 ) -> None:
+    # Check if agent requires training
+    if not ModelType.requires_training(agent_type):
+        print(
+            f"Error: Agent type '{agent_type}' ({ModelType.get_display_name(agent_type)}) doesn't require training."
+        )
+        print("Deterministic algorithms like Hamiltonian and BFS don't need training.")
+        sys.exit(1)
+
     env = create_default_environment(SnakeConfig.RENDER_MODE_NONE)
     try:
-        agent = ModelType.create_agent(model_type, enable_logging)
+        agent = ModelType.create_agent(agent_type, enable_logging)
     except ValueError as e:
         print(str(e))
         sys.exit(1)
@@ -58,7 +66,8 @@ def wait_for_restart_or_quit() -> bool:
 
 
 def play_agent(
-    model_path: Optional[str],
+    agent_type: Optional[str],
+    model_file: Optional[str],
     headless: bool,
     enable_logging: bool,
     game_speed: Optional[int] = None,
@@ -73,21 +82,34 @@ def play_agent(
 
     use_model = False
     agent = None
-    model_type = "human"
+    agent_display_name = "human"
 
-    if model_path:
+    if agent_type:
         use_model = True
         try:
-            try:
-                model_type = ModelType.from_string(model_path)
-                agent = ModelType.create_agent(model_type, enable_logging)
-            except ValueError:
-                model_type = ModelType.extract_from_filename(
-                    os.path.basename(model_path)
+            # Validate agent type
+            agent_type = ModelType.from_string(agent_type)
+
+            # Check if we're trying to use a model file with a deterministic agent
+            if model_file and not ModelType.requires_training(agent_type):
+                print(
+                    f"Warning: Agent type '{agent_type}' ({ModelType.get_display_name(agent_type)}) doesn't use model files."
                 )
-                agent = ModelType.create_agent(model_type, enable_logging)
-                if os.path.exists(model_path):
-                    agent.load(model_path)
+                print(f"The provided model file '{model_file}' will be ignored.")
+                model_file = None
+
+            # Create the agent
+            agent = ModelType.create_agent(agent_type, enable_logging)
+            agent_display_name = ModelType.get_display_name(agent_type)
+
+            # Load model file if needed
+            if model_file and ModelType.requires_training(agent_type):
+                if os.path.exists(model_file):
+                    agent.load(model_file)
+                else:
+                    print(f"Error: Model file '{model_file}' not found.")
+                    sys.exit(1)
+
         except ValueError as e:
             print(str(e))
             sys.exit(1)
@@ -136,7 +158,7 @@ def play_agent(
     print("\n" + "=" * 50)
     print("FINAL RESULTS:")
     print("=" * 50)
-    print(f"Model Type: {model_type if use_model else 'human'}")
+    print(f"Agent Type: {agent_display_name if use_model else 'human'}")
     print(f"Final Score: {env.score}")
     print(f"Model Score: {env.model_score}")
     print(f"Steps: {step_count}")
@@ -148,7 +170,12 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     train_parser = subparsers.add_parser("train")
-    train_parser.add_argument("--type", type=str, required=True)
+    train_parser.add_argument(
+        "--agent-type",
+        type=str,
+        required=True,
+        help="Type of agent to train (e.g., qlearning)",
+    )
     train_parser.add_argument(
         "--episodes", type=int, default=TrainingConfig.NUM_EPISODES
     )
@@ -158,7 +185,18 @@ def main() -> None:
     )
 
     play_parser = subparsers.add_parser("play")
-    play_parser.add_argument("--model", type=str, default="")
+    play_parser.add_argument(
+        "--agent-type",
+        type=str,
+        default="",
+        help="Type of agent to use (e.g., qlearning, hamiltonian, bfs, bfs_hamiltonian)",
+    )
+    play_parser.add_argument(
+        "--model-file",
+        type=str,
+        default="",
+        help="Path to model file (only needed for learning agents like qlearning)",
+    )
     play_parser.add_argument("--headless", action="store_true", help="Run without GUI")
     play_parser.add_argument(
         "--logging", action="store_true", help="Enable detailed logging"
@@ -170,10 +208,12 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "train":
-        train_agent(args.type, args.episodes, args.suffix, args.logging)
+        train_agent(args.agent_type, args.episodes, args.suffix, args.logging)
     elif args.command == "play":
-        model_path = args.model if args.model != "" else None
-        play_agent(model_path, args.headless, args.logging, args.speed)
+        agent_type = args.agent_type if args.agent_type != "" else None
+        model_file = args.model_file if args.model_file != "" else None
+
+        play_agent(agent_type, model_file, args.headless, args.logging, args.speed)
 
 
 if __name__ == "__main__":

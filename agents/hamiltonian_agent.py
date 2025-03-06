@@ -1,6 +1,5 @@
 import logging
 import os
-import pickle
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, cast
 
@@ -21,6 +20,10 @@ class HamiltonianAgent(BaseAgent):
         self.last_position: Optional[Point] = None
         self.debug_cycle_graphic: bool = enable_logging
         self._setup_logging(enable_logging)
+
+    @property
+    def requires_training(self) -> bool:
+        return False
 
     def _setup_logging(self, enable_logging: bool) -> None:
         if not enable_logging:
@@ -541,39 +544,27 @@ class HamiltonianAgent(BaseAgent):
             return SnakeActions.DOWN
 
     def train(self, env: Any, num_episodes: int, suffix: Optional[str]) -> str:
-        self.grid_size = env.grid_size
-        self._generate_hamiltonian_cycle()
-
+        """
+        Hamiltonian agent doesn't require training as it's a deterministic algorithm.
+        This method is implemented to satisfy the BaseAgent interface but just logs a message.
+        """
+        self.logger.info("Hamiltonian agent doesn't require training")
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         return f"{timestamp}_hamiltonian{f'_{suffix}' if suffix else ''}"
 
     def save(self, filename: str) -> None:
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, "wb") as f:
-            pickle.dump(
-                {
-                    "grid_size": self.grid_size,
-                    "hamiltonian_cycle": self.hamiltonian_cycle,
-                    "hamiltonian_map": self.hamiltonian_map,
-                },
-                f,
-            )
-        self.logger.info(f"Model saved to {filename}")
+        """
+        Hamiltonian agent doesn't need to save any data.
+        This method is implemented to satisfy the BaseAgent interface.
+        """
+        self.logger.info("Hamiltonian agent doesn't need to save any data")
 
     def load(self, filename: str) -> None:
-        try:
-            with open(filename, "rb") as f:
-                data = pickle.load(f)
-                self.grid_size = data["grid_size"]
-                self.hamiltonian_cycle = data["hamiltonian_cycle"]
-                self.hamiltonian_map = data["hamiltonian_map"]
-            self.logger.info(f"Model loaded from {filename}")
-            self.logger.info(
-                f"Grid size: {self.grid_size}, Cycle length: {len(self.hamiltonian_cycle)}"
-            )
-        except Exception as e:
-            self.logger.error(f"Error loading model: {str(e)}")
-            raise
+        """
+        Hamiltonian agent doesn't need to load any data.
+        This method is implemented to satisfy the BaseAgent interface.
+        """
+        self.logger.info("Hamiltonian agent doesn't need to load any data")
 
     @classmethod
     def create(cls, enable_logging: bool) -> "HamiltonianAgent":

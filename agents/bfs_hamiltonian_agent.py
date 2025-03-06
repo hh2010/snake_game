@@ -1,6 +1,5 @@
 import logging
 import os
-import pickle
 from collections import deque
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
@@ -24,6 +23,10 @@ class BFSHamiltonianAgent(BaseAgent):
         self.hamiltonian_agent = HamiltonianAgent(enable_logging=enable_logging)
 
         self._setup_logging(enable_logging)
+
+    @property
+    def requires_training(self) -> bool:
+        return False
 
     def _setup_logging(self, enable_logging: bool) -> None:
         if not enable_logging:
@@ -143,47 +146,27 @@ class BFSHamiltonianAgent(BaseAgent):
         return None
 
     def train(self, env: Any, num_episodes: int, suffix: Optional[str]) -> str:
-        self.grid_size = env.grid_size
-        self.logger.info(
-            f"Training BFS-Hamiltonian agent with grid size {self.grid_size}"
-        )
-
-        # Set up both component agents
-        self.bfs_agent.grid_size = self.grid_size
-        self.hamiltonian_agent.grid_size = self.grid_size
-        self.hamiltonian_agent._generate_hamiltonian_cycle()
-
+        """
+        BFS-Hamiltonian agent doesn't require training as it's a deterministic algorithm.
+        This method is implemented to satisfy the BaseAgent interface but just logs a message.
+        """
+        self.logger.info("BFS-Hamiltonian agent doesn't require training")
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         return f"{timestamp}_bfs_hamiltonian{f'_{suffix}' if suffix else ''}"
 
     def save(self, filename: str) -> None:
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, "wb") as f:
-            pickle.dump(
-                {
-                    "grid_size": self.grid_size,
-                    "hamiltonian_cycle": self.hamiltonian_agent.hamiltonian_cycle,
-                    "hamiltonian_map": self.hamiltonian_agent.hamiltonian_map,
-                },
-                f,
-            )
-        self.logger.info(f"Model saved to {filename}")
+        """
+        BFS-Hamiltonian agent doesn't need to save any data.
+        This method is implemented to satisfy the BaseAgent interface.
+        """
+        self.logger.info("BFS-Hamiltonian agent doesn't need to save any data")
 
     def load(self, filename: str) -> None:
-        try:
-            with open(filename, "rb") as f:
-                data = pickle.load(f)
-                self.grid_size = data["grid_size"]
-                self.hamiltonian_agent.grid_size = self.grid_size
-                self.hamiltonian_agent.hamiltonian_cycle = data["hamiltonian_cycle"]
-                self.hamiltonian_agent.hamiltonian_map = data["hamiltonian_map"]
-                self.bfs_agent.grid_size = self.grid_size
-
-            self.logger.info(f"Model loaded from {filename}")
-            self.logger.info(f"Grid size: {self.grid_size}")
-        except Exception as e:
-            self.logger.error(f"Error loading model: {str(e)}")
-            raise
+        """
+        BFS-Hamiltonian agent doesn't need to load any data.
+        This method is implemented to satisfy the BaseAgent interface.
+        """
+        self.logger.info("BFS-Hamiltonian agent doesn't need to load any data")
 
     @classmethod
     def create(cls, enable_logging: bool) -> "BFSHamiltonianAgent":

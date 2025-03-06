@@ -17,6 +17,10 @@ class BFSAgent(BaseAgent):
         self.last_position: Optional[Point] = None
         self._setup_logging(enable_logging)
 
+    @property
+    def requires_training(self) -> bool:
+        return False
+
     def _setup_logging(self, enable_logging: bool) -> None:
         if not enable_logging:
             self.logger = logging.getLogger("NullLogger")
@@ -283,28 +287,44 @@ class BFSAgent(BaseAgent):
             self.logger.info(f"  {info}")
 
     def train(self, env: Any, num_episodes: int, suffix: Optional[str]) -> str:
+        """
+        BFS agent doesn't require training as it's a deterministic algorithm.
+        This method is implemented to satisfy the BaseAgent interface but it only initializes the grid size.
+        """
         self.grid_size = env.grid_size
-        self.logger.info(f"Training BFS agent with grid size {self.grid_size}")
+        self.logger.info(
+            f"BFS agent doesn't require training (grid size: {self.grid_size})"
+        )
 
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         return f"{timestamp}_bfs{f'_{suffix}' if suffix else ''}"
 
     def save(self, filename: str) -> None:
+        """
+        BFS agent doesn't require saving a model as it's a deterministic algorithm.
+        This method is implemented to satisfy the BaseAgent interface.
+        """
+        self.logger.info("BFS agent doesn't require saving a model (no-op)")
+        # Still create the file to avoid errors, but it contains minimal data
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "wb") as f:
-            pickle.dump({"grid_size": self.grid_size}, f)
-        self.logger.info(f"Model saved to {filename}")
+            pickle.dump({"grid_size": self.grid_size, "algorithm": "bfs"}, f)
 
     def load(self, filename: str) -> None:
+        """
+        BFS agent doesn't require loading a model as it's a deterministic algorithm.
+        This method is implemented to satisfy the BaseAgent interface.
+        """
+        self.logger.info("BFS agent doesn't require loading a model (no-op)")
         try:
             with open(filename, "rb") as f:
                 data = pickle.load(f)
-                self.grid_size = data["grid_size"]
-            self.logger.info(f"Model loaded from {filename}")
-            self.logger.info(f"Grid size: {self.grid_size}")
+                self.grid_size = data.get("grid_size", 0)
+                self.logger.info(f"Retrieved grid size: {self.grid_size}")
         except Exception as e:
-            self.logger.error(f"Error loading model: {str(e)}")
-            raise
+            self.logger.warning(
+                f"Couldn't load file, but this is non-critical: {str(e)}"
+            )
 
     @classmethod
     def create(cls, enable_logging: bool) -> "BFSAgent":

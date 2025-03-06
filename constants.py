@@ -3,7 +3,7 @@ import random
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final, List, Tuple, TypeAlias
+from typing import Any, Dict, Final, List, Tuple, TypeAlias
 
 Point: TypeAlias = tuple[int, int]
 State: TypeAlias = tuple[int, int, int, int, int, int, int, int]
@@ -84,63 +84,85 @@ class PlotConfig:
 
 
 @dataclass(frozen=True)
+class AgentInfo:
+    name: str
+    requires_training: bool
+
+
+@dataclass(frozen=True)
 class ModelType:
     QLEARNING: Final[str] = "qlearning"
     HAMILTONIAN: Final[str] = "hamiltonian"
     BFS: Final[str] = "bfs"
     BFS_HAMILTONIAN: Final[str] = "bfs_hamiltonian"
 
+    @classmethod
+    def get_agent_types(cls) -> Dict[str, AgentInfo]:
+        """Return a dictionary mapping agent type identifiers to their metadata"""
+        return {
+            cls.QLEARNING: AgentInfo(name="Q-Learning", requires_training=True),
+            cls.HAMILTONIAN: AgentInfo(
+                name="Hamiltonian Cycle", requires_training=False
+            ),
+            cls.BFS: AgentInfo(name="Breadth-First Search", requires_training=False),
+            cls.BFS_HAMILTONIAN: AgentInfo(
+                name="BFS-Hamiltonian Hybrid", requires_training=False
+            ),
+        }
+
     @staticmethod
     def from_string(model_type: str) -> str:
         model_type = model_type.lower()
-        if model_type in [
-            ModelType.QLEARNING,
-            ModelType.HAMILTONIAN,
-            ModelType.BFS,
-            ModelType.BFS_HAMILTONIAN,
-        ]:
+        if model_type in ModelType.get_agent_types():
             return model_type
-        raise ValueError(f"Unknown model type: {model_type}")
+        raise ValueError(f"Unknown agent type: {model_type}")
 
     @staticmethod
-    def create_agent(model_type: str, enable_logging: bool) -> Any:
-        model_type = ModelType.from_string(model_type)
-        if model_type == ModelType.QLEARNING:
+    def requires_training(agent_type: str) -> bool:
+        """Check if the agent type requires training"""
+        agent_type = ModelType.from_string(agent_type)
+        return ModelType.get_agent_types()[agent_type].requires_training
+
+    @staticmethod
+    def get_display_name(agent_type: str) -> str:
+        """Get the display name for an agent type"""
+        agent_type = ModelType.from_string(agent_type)
+        return ModelType.get_agent_types()[agent_type].name
+
+    @staticmethod
+    def create_agent(agent_type: str, enable_logging: bool) -> Any:
+        agent_type = ModelType.from_string(agent_type)
+        if agent_type == ModelType.QLEARNING:
             from agents.qlearning_agent import QLearningAgent
 
             return QLearningAgent()
-        elif model_type == ModelType.HAMILTONIAN:
+        elif agent_type == ModelType.HAMILTONIAN:
             from agents.hamiltonian_agent import HamiltonianAgent
 
             return HamiltonianAgent(enable_logging=enable_logging)
-        elif model_type == ModelType.BFS:
+        elif agent_type == ModelType.BFS:
             from agents.bfs_agent import BFSAgent
 
             return BFSAgent(enable_logging=enable_logging)
-        elif model_type == ModelType.BFS_HAMILTONIAN:
+        elif agent_type == ModelType.BFS_HAMILTONIAN:
             from agents.bfs_hamiltonian_agent import BFSHamiltonianAgent
 
             return BFSHamiltonianAgent(enable_logging=enable_logging)
-        raise ValueError(f"No agent implementation for model type: {model_type}")
+        raise ValueError(f"No agent implementation for agent type: {agent_type}")
 
     @staticmethod
     def extract_from_filename(filename: str) -> str:
-        # First check if the filename is just the model type itself
-        if filename.lower() in [
-            ModelType.QLEARNING,
-            ModelType.HAMILTONIAN,
-            ModelType.BFS,
-            ModelType.BFS_HAMILTONIAN,
-        ]:
+        # First check if the filename is just the agent type itself
+        if filename.lower() in ModelType.get_agent_types():
             return filename.lower()
 
-        # Extract model type from filename like "20250224230142_qlearning.pkl"
+        # Extract agent type from filename like "20250224230142_qlearning.pkl"
         pattern = r"_(\w+)(?:_|\.)"
         match = re.search(pattern, filename)
         if match:
             return match.group(1)
 
-        raise ValueError(f"Could not extract model type from filename: {filename}")
+        raise ValueError(f"Could not extract agent type from filename: {filename}")
 
 
 def create_default_environment(render_mode: str) -> Any:
