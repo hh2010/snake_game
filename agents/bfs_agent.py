@@ -27,12 +27,21 @@ class BFSAgent(BaseAgent):
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         log_filename = f"logs/bfs_agent_{timestamp}.log"
 
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-            handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
-        )
+        # Configure logger to write only to file, not terminal
         self.logger = logging.getLogger("BFSAgent")
+        self.logger.setLevel(logging.DEBUG)
+
+        # Remove any existing handlers
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
+
+        # Add file handler only
+        file_handler = logging.FileHandler(log_filename)
+        file_handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        )
+        self.logger.addHandler(file_handler)
+
         self.logger.info(f"Initializing BFS Agent - Log file: {log_filename}")
 
     def choose_action(self, state: State) -> Action:
