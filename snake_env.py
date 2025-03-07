@@ -17,7 +17,7 @@ from constants import (
     SnakeConfig,
     State,
 )
-from utils.logging_utils import setup_logger
+from utils import logging_utils  # Import the module itself
 
 
 class ImprovedSnakeEnv:
@@ -46,7 +46,9 @@ class ImprovedSnakeEnv:
         self.current_episode_reward = 0.0
         self.game_speed: int = SnakeConfig.GAME_SPEED
 
-        self.logger, _ = setup_logger("SnakeEnv", debug_mode)
+        self.logger, _ = logging_utils.setup_logger(
+            "SnakeEnv", debug_mode
+        )  # Use the imported module
         self.reset()
 
         if self.render_mode == SnakeConfig.RENDER_MODE_HUMAN:

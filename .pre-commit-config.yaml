@@ -17,6 +17,14 @@ repos:
         exclude: ^tests/
         stages: [pre-commit]
         always_run: false
+      - id: autoflake
+        name: autoflake (local)
+        entry: autoflake
+        language: system
+        types: [python]
+        args: ["--remove-all-unused-imports", "--remove-unused-variables", "--ignore-init-module-imports"]
+        files: "\\.py$"
+        stages: [pre-commit]
 
   - repo: https://github.com/pre-commit/mirrors-isort
     rev: v5.10.1

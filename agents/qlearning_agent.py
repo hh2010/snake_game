@@ -19,7 +19,7 @@ from constants import (
     TrainingConfig,
 )
 from snake_env import ImprovedSnakeEnv
-from utils import get_best_action
+from utils import dict_get, get_best_action  # Import from utils package
 from utils.logging_utils import setup_logger
 
 
