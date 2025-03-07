@@ -1,7 +1,7 @@
 import random
 from typing import Callable, Dict, List
 
-from constants import Action, RandomState, State
+from constants import Action, State
 
 
 def dict_get(d: Dict[str, float]) -> Callable[[str], float]:

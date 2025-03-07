@@ -1,7 +1,5 @@
-import logging
-import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional
 
 from agents.base_agent import BaseAgent
 from constants import Action, Point, SnakeActions, State
@@ -27,7 +25,7 @@ class ZigzagAgent(BaseAgent):
         return False
 
     def choose_action(self, state: State) -> Action:
-        from snake_env import ImprovedSnakeEnv
+        pass
 
         env = self._get_env_from_state()
 

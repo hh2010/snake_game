@@ -1,9 +1,8 @@
-import logging
 import os
 import pickle
 from collections import deque
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, List, Optional
 
 from agents.base_agent import BaseAgent
 from constants import Action, Point, SnakeActions, State
@@ -25,7 +24,7 @@ class BFSAgent(BaseAgent):
         return False
 
     def choose_action(self, state: State) -> Action:
-        from snake_env import ImprovedSnakeEnv
+        pass
 
         env = self._get_env_from_state()
 

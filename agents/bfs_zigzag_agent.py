@@ -1,8 +1,5 @@
-import logging
-import os
-from collections import deque
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Optional
 
 from agents.base_agent import BaseAgent
 from agents.bfs_agent import BFSAgent
@@ -30,7 +27,7 @@ class BFSZigzagAgent(BaseAgent):
         return False
 
     def choose_action(self, state: State) -> Action:
-        from snake_env import ImprovedSnakeEnv
+        pass
 
         env = self._get_env_from_state()
 

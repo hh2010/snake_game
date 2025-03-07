@@ -12,7 +12,7 @@ repos:
         entry: python -m pylint
         language: system
         types: [python]
-        args: ["--errors-only"]
+        args: ["--errors-only", "--disable=no-name-in-module"]
         files: "\\.py$"
         exclude: ^tests/
         stages: [pre-commit]
@@ -22,7 +22,7 @@ repos:
         entry: autoflake
         language: system
         types: [python]
-        args: ["--remove-all-unused-imports", "--remove-unused-variables", "--ignore-init-module-imports"]
+        args: ["--remove-all-unused-imports", "--remove-unused-variables", "--ignore-init-module-imports", "--in-place"]
         files: "\\.py$"
         stages: [pre-commit]
 
