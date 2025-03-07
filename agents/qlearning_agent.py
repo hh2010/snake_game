@@ -1,5 +1,6 @@
 import csv
 import datetime
+import logging
 import os
 import pickle
 import random
@@ -19,12 +20,18 @@ from constants import (
 )
 from snake_env import ImprovedSnakeEnv
 from utils import get_best_action
+from utils.logging_utils import setup_logger
 
 
 class QLearningAgent(BaseAgent):
-    def __init__(self) -> None:
+    def __init__(self, debug_mode: bool = False) -> None:
         self.Q_table: Dict[State, Dict[str, float]] = {}
         self.random: random.Random = random.Random(RandomState.TRAINING_SEED)
+        self.logger, _ = setup_logger("QLearningAgent", debug_mode)
+
+    @property
+    def requires_training(self) -> bool:
+        return True
 
     def choose_action(self, state: State) -> Action:
         if state not in self.Q_table:
@@ -77,7 +84,7 @@ class QLearningAgent(BaseAgent):
         plt.savefig(plot_path)
         plt.close()
 
-        print(f"Training data saved to {rewards_csv_path} and {plot_path}")
+        self.logger.info(f"Training data saved to {rewards_csv_path} and {plot_path}")
 
     def train(
         self, env: ImprovedSnakeEnv, num_episodes: int, suffix: Optional[str] = None
@@ -89,6 +96,9 @@ class QLearningAgent(BaseAgent):
 
         if suffix:
             model_name = f"{model_name}_{suffix}"
+
+        self.logger.info(f"Starting training with {num_episodes} episodes")
+        self.logger.info(f"Initial epsilon: {epsilon}")
 
         for episode in range(num_episodes):
             state: State = env.reset()
@@ -119,8 +129,8 @@ class QLearningAgent(BaseAgent):
                 avg_reward = (
                     sum(recent_rewards) / len(recent_rewards) if recent_rewards else 0
                 )
-                print(
-                    f"Episode {episode+1}/{num_episodes}, Avg Reward: {avg_reward:.2f}"
+                self.logger.info(
+                    f"Episode {episode+1}/{num_episodes}, Avg Reward: {avg_reward:.2f}, Epsilon: {epsilon:.3f}"
                 )
 
         env.reset()
@@ -132,7 +142,13 @@ class QLearningAgent(BaseAgent):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "wb") as f:
             pickle.dump(self.Q_table, f)
+        self.logger.info(f"Model saved to {filename}")
 
     def load(self, filename: str) -> None:
         with open(filename, "rb") as f:
             self.Q_table = pickle.load(f)
+        self.logger.info(f"Model loaded from {filename}")
+
+    @classmethod
+    def create(cls, debug_mode: bool = False) -> "QLearningAgent":
+        return cls(debug_mode=debug_mode)

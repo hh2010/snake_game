@@ -1,4 +1,7 @@
+import logging
+import os
 import random
+from datetime import datetime
 from typing import List, Optional, Tuple, cast
 
 # pylint: disable=no-member
@@ -14,6 +17,7 @@ from constants import (
     SnakeConfig,
     State,
 )
+from utils.logging_utils import setup_logger
 
 
 class ImprovedSnakeEnv:
@@ -22,6 +26,7 @@ class ImprovedSnakeEnv:
         grid_size: int,
         block_size: int,
         render_mode: str,
+        debug_mode: bool = False,
     ) -> None:
         self.grid_size = grid_size
         self.block_size = block_size
@@ -41,6 +46,7 @@ class ImprovedSnakeEnv:
         self.current_episode_reward = 0.0
         self.game_speed: int = SnakeConfig.GAME_SPEED
 
+        self.logger, _ = setup_logger("SnakeEnv", debug_mode)
         self.reset()
 
         if self.render_mode == SnakeConfig.RENDER_MODE_HUMAN:
@@ -49,9 +55,13 @@ class ImprovedSnakeEnv:
             self.screen = pygame.display.set_mode((self.window_size, self.window_size))
             self.clock = pygame.time.Clock()
             self.font = pygame.font.Font(None, SnakeConfig.METRICS_FONT_SIZE)
+            self.logger.info(
+                f"Initialized pygame window {self.window_size}x{self.window_size}"
+            )
 
     def reset(self) -> State:
         self.episode_rewards.append(self.current_episode_reward)
+        self.logger.debug(f"Episode reward: {self.current_episode_reward}")
 
         self.random.seed(RandomState.SEED)
         self.snake = [
@@ -69,6 +79,10 @@ class ImprovedSnakeEnv:
         self.score = 0
         self.model_score = 0
         self.current_episode_reward = 0.0
+
+        self.logger.debug(
+            f"Reset - Snake: {self.snake}, Food: {self.food}, Direction: {self.direction}"
+        )
         return self.get_state()
 
     def get_state(self) -> State:
@@ -158,6 +172,7 @@ class ImprovedSnakeEnv:
             self.snake.pop()
             old_dist = abs(head_x - self.food[0]) + abs(head_y - self.food[1])
             new_dist = abs(new_head[0] - self.food[0]) + abs(new_head[1] - self.food[1])
+            # Cast reward to int to match expected type
             reward = (
                 RewardConfig.CLOSER_TO_FOOD
                 if new_dist < old_dist
@@ -165,7 +180,9 @@ class ImprovedSnakeEnv:
             )
             self.model_score += reward
 
-        self.current_episode_reward += reward
+        self.current_episode_reward += float(
+            reward
+        )  # Convert to float for episode rewards
         self.direction = action
         return self.get_state(), reward, self.done
 
@@ -210,7 +227,6 @@ class ImprovedSnakeEnv:
         # Metrics display (top right)
         metrics = [
             f"Score: {self.score}",
-            f"Model Score: {self.model_score}",
             f"Steps: {step_text or step_count}",
             f"Speed: {self.game_speed}",
         ]

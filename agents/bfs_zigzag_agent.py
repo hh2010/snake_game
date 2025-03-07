@@ -6,56 +6,28 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 from agents.base_agent import BaseAgent
 from agents.bfs_agent import BFSAgent
-from agents.hamiltonian_agent import HamiltonianAgent
+from agents.zigzag_agent import ZigzagAgent
 from constants import Action, Point, SnakeActions, State
+from utils.logging_utils import setup_logger
 
 
-class BFSHamiltonianAgent(BaseAgent):
-    def __init__(self, enable_logging: bool) -> None:
+class BFSZigzagAgent(BaseAgent):
+    def __init__(self, debug_mode: bool = False) -> None:
         self.grid_size: int = 0
-        self.debug_enabled: bool = enable_logging
+        self.debug_enabled: bool = debug_mode
         self.actions_taken: int = 0
         self.last_position: Optional[Point] = None
-        self.bfs_mode: bool = True  # Track which mode we're in - BFS or Hamiltonian
+        self.bfs_mode: bool = True  # Track which mode we're in - BFS or Zigzag
 
         # Initialize component agents
-        self.bfs_agent = BFSAgent(enable_logging=enable_logging)
-        self.hamiltonian_agent = HamiltonianAgent(enable_logging=enable_logging)
+        self.bfs_agent = BFSAgent(debug_mode=debug_mode)
+        self.zigzag_agent = ZigzagAgent(debug_mode=debug_mode)
 
-        self._setup_logging(enable_logging)
+        self.logger, _ = setup_logger("BFSZigzagAgent", debug_mode)
 
     @property
     def requires_training(self) -> bool:
         return False
-
-    def _setup_logging(self, enable_logging: bool) -> None:
-        if not enable_logging:
-            self.logger = logging.getLogger("NullLogger")
-            self.logger.addHandler(logging.NullHandler())
-            return
-
-        os.makedirs("logs", exist_ok=True)
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        log_filename = f"logs/bfs_hamiltonian_agent_{timestamp}.log"
-
-        # Configure logger to write only to file, not terminal
-        self.logger = logging.getLogger("BFSHamiltonianAgent")
-        self.logger.setLevel(logging.DEBUG)
-
-        # Remove any existing handlers
-        if self.logger.hasHandlers():
-            self.logger.handlers.clear()
-
-        # Add file handler only
-        file_handler = logging.FileHandler(log_filename)
-        file_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        )
-        self.logger.addHandler(file_handler)
-
-        self.logger.info(
-            f"Initializing BFS-Hamiltonian Hybrid Agent - Log file: {log_filename}"
-        )
 
     def choose_action(self, state: State) -> Action:
         from snake_env import ImprovedSnakeEnv
@@ -80,24 +52,22 @@ class BFSHamiltonianAgent(BaseAgent):
 
             # Make sure both component agents have the grid size set
             self.bfs_agent.grid_size = self.grid_size
-            self.hamiltonian_agent.grid_size = self.grid_size
+            self.zigzag_agent.grid_size = self.grid_size
 
-            # Generate Hamiltonian cycle when grid size changes
-            self.hamiltonian_agent._generate_hamiltonian_cycle()
+            # Generate Zigzag cycle when grid size changes
+            self.zigzag_agent._generate_zigzag_cycle()
 
         # Try BFS path to food first
         path_to_food = self.bfs_agent._find_path_to_food(snake_head, food, snake_body)
 
         if not path_to_food:
-            # No direct path to food - switch to Hamiltonian mode
+            # No direct path to food - switch to Zigzag mode
             if self.bfs_mode:
-                self.logger.info("No path to food found. Switching to Hamiltonian mode")
+                self.logger.info("No path to food found. Switching to Zigzag mode")
                 self.bfs_mode = False
 
-            action = self.hamiltonian_agent._get_next_action_in_cycle(
-                snake_head, snake_body
-            )
-            self.logger.info(f"Using Hamiltonian action: {action}")
+            action = self.zigzag_agent._get_next_action_in_cycle(snake_head, snake_body)
+            self.logger.info(f"Using Zigzag action: {action}")
 
         else:
             # Path to food exists, check if it's safe
@@ -115,17 +85,17 @@ class BFSHamiltonianAgent(BaseAgent):
                 self.logger.info(f"Using BFS action: {action}")
 
             else:
-                # Not safe - switch to Hamiltonian mode
+                # Not safe - switch to Zigzag mode
                 if self.bfs_mode:
                     self.logger.info(
-                        "Path to food exists but is unsafe. Switching to Hamiltonian mode"
+                        "Path to food exists but is unsafe. Switching to Zigzag mode"
                     )
                     self.bfs_mode = False
 
-                action = self.hamiltonian_agent._get_next_action_in_cycle(
+                action = self.zigzag_agent._get_next_action_in_cycle(
                     snake_head, snake_body
                 )
-                self.logger.info(f"Using Hamiltonian action: {action}")
+                self.logger.info(f"Using Zigzag action: {action}")
 
         self.actions_taken += 1
         if self.actions_taken % 100 == 0:
@@ -147,27 +117,27 @@ class BFSHamiltonianAgent(BaseAgent):
 
     def train(self, env: Any, num_episodes: int, suffix: Optional[str]) -> str:
         """
-        BFS-Hamiltonian agent doesn't require training as it's a deterministic algorithm.
+        BFS-Zigzag agent doesn't require training as it's a deterministic algorithm.
         This method is implemented to satisfy the BaseAgent interface but just logs a message.
         """
-        self.logger.info("BFS-Hamiltonian agent doesn't require training")
+        self.logger.info("BFS-Zigzag agent doesn't require training")
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        return f"{timestamp}_bfs_hamiltonian{f'_{suffix}' if suffix else ''}"
+        return f"{timestamp}_bfs_zigzag{f'_{suffix}' if suffix else ''}"
 
     def save(self, filename: str) -> None:
         """
-        BFS-Hamiltonian agent doesn't need to save any data.
+        BFS-Zigzag agent doesn't need to save any data.
         This method is implemented to satisfy the BaseAgent interface.
         """
-        self.logger.info("BFS-Hamiltonian agent doesn't need to save any data")
+        self.logger.info("BFS-Zigzag agent doesn't need to save any data")
 
     def load(self, filename: str) -> None:
         """
-        BFS-Hamiltonian agent doesn't need to load any data.
+        BFS-Zigzag agent doesn't need to load any data.
         This method is implemented to satisfy the BaseAgent interface.
         """
-        self.logger.info("BFS-Hamiltonian agent doesn't need to load any data")
+        self.logger.info("BFS-Zigzag agent doesn't need to load any data")
 
     @classmethod
-    def create(cls, enable_logging: bool) -> "BFSHamiltonianAgent":
-        return cls(enable_logging=enable_logging)
+    def create(cls, debug_mode: bool = False) -> "BFSZigzagAgent":
+        return cls(debug_mode=debug_mode)

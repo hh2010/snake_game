@@ -56,8 +56,8 @@ class TrainingConfig:
 class RewardConfig:
     COLLISION_PENALTY: Final[int] = -2
     FOOD_REWARD: Final[int] = 1
-    CLOSER_TO_FOOD: Final[float] = 0.02
-    AWAY_FROM_FOOD: Final[float] = -0.02
+    CLOSER_TO_FOOD: Final[int] = 0  # Changed from float to int
+    AWAY_FROM_FOOD: Final[int] = 0  # Changed from float to int
 
 
 @dataclass(frozen=True)
@@ -92,21 +92,19 @@ class AgentInfo:
 @dataclass(frozen=True)
 class ModelType:
     QLEARNING: Final[str] = "qlearning"
-    HAMILTONIAN: Final[str] = "hamiltonian"
+    ZIGZAG: Final[str] = "zigzag"
     BFS: Final[str] = "bfs"
-    BFS_HAMILTONIAN: Final[str] = "bfs_hamiltonian"
+    BFS_ZIGZAG: Final[str] = "bfs_zigzag"
 
     @classmethod
     def get_agent_types(cls) -> Dict[str, AgentInfo]:
         """Return a dictionary mapping agent type identifiers to their metadata"""
         return {
             cls.QLEARNING: AgentInfo(name="Q-Learning", requires_training=True),
-            cls.HAMILTONIAN: AgentInfo(
-                name="Hamiltonian Cycle", requires_training=False
-            ),
+            cls.ZIGZAG: AgentInfo(name="Zigzag Cycle", requires_training=False),
             cls.BFS: AgentInfo(name="Breadth-First Search", requires_training=False),
-            cls.BFS_HAMILTONIAN: AgentInfo(
-                name="BFS-Hamiltonian Hybrid", requires_training=False
+            cls.BFS_ZIGZAG: AgentInfo(
+                name="BFS-Zigzag Hybrid", requires_training=False
             ),
         }
 
@@ -130,24 +128,37 @@ class ModelType:
         return ModelType.get_agent_types()[agent_type].name
 
     @staticmethod
-    def create_agent(agent_type: str, enable_logging: bool) -> Any:
+    def _create_environment(render_mode: str, debug_mode: bool = False) -> Any:
+        """Create a snake environment"""
+        from snake_env import ImprovedSnakeEnv
+
+        return ImprovedSnakeEnv(
+            grid_size=SnakeConfig.DEFAULT_GRID_SIZE,
+            block_size=SnakeConfig.DEFAULT_BLOCK_SIZE,
+            render_mode=render_mode,
+            debug_mode=debug_mode,
+        )
+
+    @staticmethod
+    def create_agent(agent_type: str, debug_mode: bool = False) -> Any:
+        """Create an agent instance of the specified type with debug mode setting"""
         agent_type = ModelType.from_string(agent_type)
         if agent_type == ModelType.QLEARNING:
             from agents.qlearning_agent import QLearningAgent
 
-            return QLearningAgent()
-        elif agent_type == ModelType.HAMILTONIAN:
-            from agents.hamiltonian_agent import HamiltonianAgent
+            return QLearningAgent.create(debug_mode=debug_mode)
+        elif agent_type == ModelType.ZIGZAG:
+            from agents.zigzag_agent import ZigzagAgent
 
-            return HamiltonianAgent(enable_logging=enable_logging)
+            return ZigzagAgent.create(debug_mode=debug_mode)
         elif agent_type == ModelType.BFS:
             from agents.bfs_agent import BFSAgent
 
-            return BFSAgent(enable_logging=enable_logging)
-        elif agent_type == ModelType.BFS_HAMILTONIAN:
-            from agents.bfs_hamiltonian_agent import BFSHamiltonianAgent
+            return BFSAgent.create(debug_mode=debug_mode)
+        elif agent_type == ModelType.BFS_ZIGZAG:
+            from agents.bfs_zigzag_agent import BFSZigzagAgent
 
-            return BFSHamiltonianAgent(enable_logging=enable_logging)
+            return BFSZigzagAgent.create(debug_mode=debug_mode)
         raise ValueError(f"No agent implementation for agent type: {agent_type}")
 
     @staticmethod
@@ -165,11 +176,14 @@ class ModelType:
         raise ValueError(f"Could not extract agent type from filename: {filename}")
 
 
-def create_default_environment(render_mode: str) -> Any:
+def create_default_environment(render_mode: str, debug_mode: bool = False) -> Any:
+    """Create a default snake environment with standard settings"""
+    # Import here to avoid circular import
     from snake_env import ImprovedSnakeEnv
 
     return ImprovedSnakeEnv(
         grid_size=SnakeConfig.DEFAULT_GRID_SIZE,
         block_size=SnakeConfig.DEFAULT_BLOCK_SIZE,
         render_mode=render_mode,
+        debug_mode=debug_mode,
     )

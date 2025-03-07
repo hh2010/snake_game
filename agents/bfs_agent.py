@@ -7,46 +7,22 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 from agents.base_agent import BaseAgent
 from constants import Action, Point, SnakeActions, State
+from utils.logging_utils import setup_logger
 
 
 class BFSAgent(BaseAgent):
-    def __init__(self, enable_logging: bool) -> None:
+    def __init__(self, debug_mode: bool = False) -> None:
         self.grid_size: int = 0
-        self.debug_enabled: bool = enable_logging
+        self.debug_enabled: bool = debug_mode
+        self.first_action: bool = True
+        self.last_action: Optional[Action] = None
         self.actions_taken: int = 0
         self.last_position: Optional[Point] = None
-        self._setup_logging(enable_logging)
+        self.logger, _ = setup_logger("BFSAgent", debug_mode)
 
     @property
     def requires_training(self) -> bool:
         return False
-
-    def _setup_logging(self, enable_logging: bool) -> None:
-        if not enable_logging:
-            self.logger = logging.getLogger("NullLogger")
-            self.logger.addHandler(logging.NullHandler())
-            return
-
-        os.makedirs("logs", exist_ok=True)
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        log_filename = f"logs/bfs_agent_{timestamp}.log"
-
-        # Configure logger to write only to file, not terminal
-        self.logger = logging.getLogger("BFSAgent")
-        self.logger.setLevel(logging.DEBUG)
-
-        # Remove any existing handlers
-        if self.logger.hasHandlers():
-            self.logger.handlers.clear()
-
-        # Add file handler only
-        file_handler = logging.FileHandler(log_filename)
-        file_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        )
-        self.logger.addHandler(file_handler)
-
-        self.logger.info(f"Initializing BFS Agent - Log file: {log_filename}")
 
     def choose_action(self, state: State) -> Action:
         from snake_env import ImprovedSnakeEnv
@@ -89,12 +65,12 @@ class BFSAgent(BaseAgent):
             if self._is_safe_move(next_pos, virtual_snake):
                 # Get action to move to the next position in the path
                 action = self._get_action_for_move(snake_head, next_pos)
-                self.logger.info(f"Taking path action to food: {action}")
+                self.logger.debug(f"Taking path action to food: {action}")
             else:
                 self.logger.warning(f"Path to food exists but is unsafe after eating")
                 # Fall back to survival mode
                 action = self._find_survival_path(snake_head, snake_body)
-                self.logger.info(f"Taking survival action instead: {action}")
+                self.logger.debug(f"Taking survival action instead: {action}")
 
         self.actions_taken += 1
         if self.actions_taken % 100 == 0:
@@ -125,7 +101,7 @@ class BFSAgent(BaseAgent):
             (x, y), path = queue.popleft()
 
             if (x, y) == target:
-                self.logger.info(f"Found path to food with length {len(path)}")
+                self.logger.debug(f"Found path to food with length {len(path)}")
                 return path
 
             # Check all four adjacent cells
@@ -327,5 +303,5 @@ class BFSAgent(BaseAgent):
             )
 
     @classmethod
-    def create(cls, enable_logging: bool) -> "BFSAgent":
-        return cls(enable_logging=enable_logging)
+    def create(cls, debug_mode: bool) -> "BFSAgent":
+        return cls(debug_mode=debug_mode)
